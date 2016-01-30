@@ -1,0 +1,4 @@
+[Project]
+Name=nutshell
+Manager=KDevCMakeManager
+VersionControl=kdevgit
