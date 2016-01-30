@@ -1,6 +1,13 @@
-#include <iostream>
+#include "Shell.h"
 
-int main(int argc, char **argv) {
-    std::cout << "Hello, world!" << std::endl;
-    return 0;
+using namespace std;
+
+
+// Features premptive bin detection
+/// Colours command as you type
+/// Could be extended to arguments
+
+int main(int /*argc*/, char */*argv*/[]) {
+  Shell shell;
+  return shell.run();
 }
