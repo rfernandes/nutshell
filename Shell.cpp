@@ -2,12 +2,13 @@
 
 #include <ncurses.h>
 
+using namespace std;
+
 Shell::Shell()
 : _command(*this){
   _prompt();
-  curs_set(2);
+  curs_set(1);
   init_pair(2, COLOR_GREEN, -1);
-
 }
 
 void Shell::event(Event event)
@@ -21,35 +22,69 @@ int Shell::run() {
     refresh();
     switch (keystroke) {
       case '\n':
-        _command();
+        addch('\n');
+        _history.add(_command.get());
+        addstr(_command().data());
         event(Event::PROMPT_DISPLAY);
         break;
       case 127:
       case KEY_BACKSPACE:
-        unsigned x,y;
-        getyx(stdscr, y, x);
-        move(y,x-1);
+        if (!_command.empty()){
+          unsigned x,y;
+          getyx(stdscr, y, x);
+          move(y,x-1);
+        }
       case KEY_DC:
-      {
-
         delch();
         _command.pop();
         break;
-      }
       case KEY_LEFT:
       {
         unsigned x,y;
         getyx(stdscr, y, x);
-        move(y,x-1);
+        move(y, max(x-1, _prompt.width()) );
         break;
       }
       case KEY_RIGHT:
       {
         unsigned x,y;
         getyx(stdscr, y, x);
-        move(y,x+1);
+        move(y, min(x+1, _prompt.width() + _command.width()));
         break;
       }
+      case KEY_HOME:
+      {
+        unsigned x,y;
+        getyx(stdscr, y, x);
+        move(y, _prompt.width());
+        break;
+      }
+      case KEY_END:
+      {
+        unsigned x,y;
+        getyx(stdscr, y, x);
+        move(y, _prompt.width() + _command.width());
+        break;
+      }
+      case KEY_UP:
+      {
+        _history.backward();
+        break;
+      }
+      case KEY_DOWN:
+      {
+        _history.forward();
+        break;
+      }
+      case 3: //Ctrl-C
+      case 18: //Ctrl-R
+        addstr("History interactive mode unimplemented");
+        break;
+      case 4: //Ctrl-D
+        event(Event::SHELL_EXIT);
+        break;
+      case KEY_RESIZE:
+        break; // ignore list
       default:
         _command.push(keystroke);
         addch(keystroke);
@@ -61,18 +96,27 @@ int Shell::run() {
       _events.pop();
       switch (event)
       {
+        case Event::COMMAND_CLEAR_MATCHED:
         case Event::COMMAND_MATCHED:
-          deleteln();
+        {
           unsigned x,y;
           getyx(stdscr, y, x);
+          deleteln();
           move(y,0);
           _prompt();
-          attron(COLOR_PAIR(2));
+          if (event == Event::COMMAND_MATCHED) {
+            attron(A_UNDERLINE);
+            attron(COLOR_PAIR(2));
+          }
           addstr(_command.get().data());
-          attroff(COLOR_PAIR(2));
+          if (event == Event::COMMAND_MATCHED) {
+            attroff(A_UNDERLINE);
+            attroff(COLOR_PAIR(2));
+          }
           break;
+        }
         case Event::COMMAND_ERROR_NOT_FOUND:
-          addstr("\nNutShell: command not found\n");
+          addstr("NutShell: command not found\n");
           break;
         case Event::PROMPT_DISPLAY:
           _prompt();

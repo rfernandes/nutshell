@@ -4,6 +4,7 @@
 #include "Terminal.h"
 #include "Prompt.h"
 #include "Command.h"
+#include "History.h"
 
 #include <queue>
 
@@ -12,10 +13,11 @@ class Shell
 public:
 
   enum class Event {
-    COMMAND_MATCHED,
-    COMMAND_ERROR_NOT_FOUND,
+    SHELL_EXIT,
     PROMPT_DISPLAY,
-    SHELL_EXIT
+    COMMAND_ERROR_NOT_FOUND,
+    COMMAND_MATCHED,
+    COMMAND_CLEAR_MATCHED,
   };
 
   Shell();
@@ -29,6 +31,7 @@ private:
   Terminal _term;
   Prompt _prompt;
   Command _command;
+  History _history;
   std::queue<Event> _events;
 };
 

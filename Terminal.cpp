@@ -5,9 +5,12 @@
 #include <ncurses.h>
 
 Terminal::Terminal() {
+  setlocale(LC_ALL, "");
   initscr();
   cbreak();
+  raw();
   noecho();
+  scrollok(stdscr, TRUE);
   keypad(stdscr, TRUE);
   if (!has_colors()) {
     endwin();

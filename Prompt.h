@@ -9,7 +9,11 @@ class Prompt
 public:
   Prompt();
 
-  void operator()();
+  /// display the prompt
+  void operator()() const;
+
+  /// get width of the last line of the prompt
+  unsigned width() const;
 };
 
 #endif
