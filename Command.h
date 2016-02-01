@@ -13,13 +13,17 @@ class Shell;
 
 class Command
 {
-  Shell &_shell;
-  std::string _command;
+  using Segments = std::vector<std::string>;
+  using Execution = std::function<std::string(const std::string& params)>;
 
-  using execution = std::function<std::string(const std::string& params)>;
+  Segments _segments;
+  Segments::iterator _active;
+
+  Shell &_shell;
+
 
   std::vector<std::experimental::filesystem::path> _path;
-  std::unordered_map<std::string, execution> _matches;
+  std::unordered_map<std::string, Execution> _matches;
   bool _matching;
 
   bool matches();
@@ -27,7 +31,8 @@ class Command
 public:
   Command(Shell &shell);
 
-  const std::string& get() const { return _command; };
+  const std::string& command() const;
+  std::string parameters() const;
 
   void push(unsigned letter);
   void pop();

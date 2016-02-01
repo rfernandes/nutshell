@@ -23,20 +23,21 @@ int Shell::run() {
     switch (keystroke) {
       case '\n':
         addch('\n');
-        _history.add(_command.get());
+        _history.add(_command.command());
         addstr(_command().data());
         event(Event::PROMPT_DISPLAY);
         break;
       case 127:
       case KEY_BACKSPACE:
-        if (!_command.empty()){
+        {
+          if (_command.empty()) break;
           unsigned x,y;
           getyx(stdscr, y, x);
           move(y,x-1);
         }
       case KEY_DC:
-        delch();
-        _command.pop();
+         _command.pop();
+         delch();
         break;
       case KEY_LEFT:
       {
@@ -108,11 +109,17 @@ int Shell::run() {
             attron(A_UNDERLINE);
             attron(COLOR_PAIR(2));
           }
-          addstr(_command.get().data());
+          addstr(_command.command().data());
           if (event == Event::COMMAND_MATCHED) {
             attroff(A_UNDERLINE);
             attroff(COLOR_PAIR(2));
           }
+          auto parameters = _command.parameters();
+          if (!parameters.empty())
+          {
+            addch(' ');
+          }
+          addstr(_command.parameters().data());
           break;
         }
         case Event::COMMAND_ERROR_NOT_FOUND:
