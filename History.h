@@ -1,24 +1,20 @@
 #ifndef HISTORY
 #define HISTORY
 
-#include <vector>
-#include <string>
-
+#include "Line.h"
 
 class History
 {
-  std::vector<std::string> _history;
+  std::vector<Line> _history;
   std::size_t _idx;
+
 public:
-  void add(const std::string& command);
 
-  void forward()
-  {
-  }
+  History();
 
-  void backward()
-  {
-  }
+  void add(const Line& command);
+  const Line& forward();
+  const Line& backward();
 };
 
 

@@ -17,6 +17,7 @@ History.cpp
 Prompt.cpp
 Shell.cpp
 Terminal.cpp
+Line.cpp
 main.cpp
 )
 

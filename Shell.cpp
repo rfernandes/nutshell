@@ -23,25 +23,26 @@ int Shell::run() {
     switch (keystroke) {
       case '\n':
         addch('\n');
-        _history.add(_command.command());
-        addstr(_command().data());
+        addstr(_command(_line).data());
+        _history.add(_line);
+        _line = Line{};
         event(Event::PROMPT_DISPLAY);
         break;
       case 127:
       case KEY_BACKSPACE:
         {
-          if (_command.empty()) break;
-          unsigned x,y;
+          if (_line.empty()) break;
+          unsigned x, y;
           getyx(stdscr, y, x);
           move(y,x-1);
         }
       case KEY_DC:
-         _command.pop();
+         _line.pop();
          delch();
         break;
       case KEY_LEFT:
       {
-        unsigned x,y;
+        unsigned x, y;
         getyx(stdscr, y, x);
         move(y, max(x-1, _prompt.width()) );
         break;
@@ -50,33 +51,31 @@ int Shell::run() {
       {
         unsigned x,y;
         getyx(stdscr, y, x);
-        move(y, min(x+1, _prompt.width() + _command.width()));
+        move(y, min(x+1, _prompt.width() + _line.width()));
         break;
       }
       case KEY_HOME:
       {
-        unsigned x,y;
+        unsigned x, y;
         getyx(stdscr, y, x);
         move(y, _prompt.width());
         break;
       }
       case KEY_END:
       {
-        unsigned x,y;
+        unsigned x, y;
         getyx(stdscr, y, x);
-        move(y, _prompt.width() + _command.width());
+        move(y, _prompt.width() + _line.width());
         break;
       }
       case KEY_UP:
-      {
-        _history.backward();
+        _line = _history.backward();
+        event(Event::PROMPT_REFRESH);
         break;
-      }
       case KEY_DOWN:
-      {
-        _history.forward();
+        _line = _history.forward();
+        event(Event::PROMPT_REFRESH);
         break;
-      }
       case 3: //Ctrl-C
       case 18: //Ctrl-R
         addstr("History interactive mode unimplemented");
@@ -87,16 +86,16 @@ int Shell::run() {
       case KEY_RESIZE:
         break; // ignore list
       default:
-        _command.push(keystroke);
+        _line.push(keystroke);
         addch(keystroke);
+        event(_command.matches(_line) ? Shell::Event::COMMAND_MATCHED
+                                      : Shell::Event::COMMAND_CLEAR_MATCHED);
     }
 
-    while (!_events.empty())
-    {
+    while (!_events.empty()) {
       auto event =_events.front();
       _events.pop();
-      switch (event)
-      {
+      switch (event) {
         case Event::COMMAND_CLEAR_MATCHED:
         case Event::COMMAND_MATCHED:
         {
@@ -109,21 +108,29 @@ int Shell::run() {
             attron(A_UNDERLINE);
             attron(COLOR_PAIR(2));
           }
-          addstr(_command.command().data());
+          addstr(_line.command().data());
           if (event == Event::COMMAND_MATCHED) {
             attroff(A_UNDERLINE);
             attroff(COLOR_PAIR(2));
           }
-          auto parameters = _command.parameters();
-          if (!parameters.empty())
-          {
+          auto parameters = _line.parameters();
+          if (!parameters.empty()) {
             addch(' ');
           }
-          addstr(_command.parameters().data());
+          addstr(_line.parameters().data());
           break;
         }
         case Event::COMMAND_ERROR_NOT_FOUND:
           addstr("NutShell: command not found\n");
+          break;
+        case Event::PROMPT_REFRESH:
+          unsigned x,y;
+          getyx(stdscr, y, x);
+          deleteln();
+          move(y,0);
+          _prompt();
+          addstr(_line.command().data());
+          addstr(_line.parameters().data());
           break;
         case Event::PROMPT_DISPLAY:
           _prompt();

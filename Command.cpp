@@ -30,10 +30,9 @@ namespace builtins {
   };
 }
 
+
 Command::Command(Shell &shell)
-: _segments(1)
-, _active{_segments.begin()}
-, _shell{shell}
+: _shell{shell}
 , _path{"/usr/bin", "/home/c/System/bin"}
 , _matches{
     {"help", builtins::help},
@@ -42,7 +41,6 @@ Command::Command(Shell &shell)
       return "";
     }}
   }
-, _matching{false}
 {
   for (const auto& dir: _path) {
     for (const auto& entry: fs::directory_iterator{dir}) {
@@ -56,82 +54,18 @@ Command::Command(Shell &shell)
   }
 }
 
-bool Command::matches() {
-  return _matches.count(_segments.front());
+bool Command::matches(const Line& line) const {
+  return _matches.count(line.command());
 }
 
-void Command::push(unsigned letter) {
-  switch (letter)
-  {
-    case ' ':
-      if (++_active == _segments.end())
-      {
-        _segments.emplace_back();
-        _active = _segments.begin() + _segments.size() - 1;
-      }
-      break;
-    default:
-    {
-      _active->push_back(letter);
-      _shell.event(matches() ? Shell::Event::COMMAND_MATCHED
-                        : Shell::Event::COMMAND_CLEAR_MATCHED);
-    }
-  }
-}
-
-const string& Command::command() const {
-  return _segments.front();
-}
-
-string Command::parameters() const {
-  stringstream ss;
-  copy(_segments.begin() + 1, _segments.end(), ostream_iterator<string>(ss, " "));
-  string parameters = ss.str();
-  if (_segments.size() > 1){
-    parameters.resize(parameters.size() - 1);
-  }
-  return parameters;
-}
-
-
-void Command::pop() {
-  if (!_active->empty()) {
-    _active->pop_back();
-    if (_active == _segments.begin()) {
-      _shell.event(matches() ? Shell::Event::COMMAND_MATCHED
-                            : Shell::Event::COMMAND_CLEAR_MATCHED);
-    }
-  } else if (_segments.size() > 1){
-    _active = --_segments.erase(_active);
-    return;
-  }
-}
-
-bool Command::empty() const{
-  return _active->empty() && _segments.size() == 1;
-}
-
-string Command::operator()() {
+string Command::operator()(const Line& line) {
   string ret;
-  //FIXME add assert(!_segments.empty())
-  auto command_it(_matches.find(_segments.front()));
+  //FIXME add assert(!line.parameters.empty())
+  auto command_it(_matches.find(line.command()));
   if (command_it != _matches.end()) {
-    ret = command_it->second(parameters());
-  } else if (!_segments.front().empty()){
+    ret = command_it->second(line.parameters());
+  } else if (!line.command().empty()){
     _shell.event(Shell::Event::COMMAND_ERROR_NOT_FOUND);
   }
-  _active = _segments.begin();
-  _segments.resize(1);
-  _active->clear();
-  _matching = false;
   return ret;
-}
-
-unsigned Command::width() const{
-  return accumulate(_segments.begin(),
-                    _segments.end(),
-                    0u,
-                    [](unsigned acc, const string& str){
-                      return acc + str.size();
-                    }) + _segments.size() - 1;
 }

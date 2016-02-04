@@ -1,7 +1,25 @@
 #include "History.h"
 
-void History::add(const std::string& command)
+History::History()
+: _idx{0}
 {
-  _history.emplace_back(command);
 }
 
+void History::add(const Line& command) {
+  _history.emplace_back(command);
+  _idx = _history.size() - 1;
+}
+
+const Line& History::forward() {
+  if (_idx < _history.size() - 1) {
+    ++_idx;
+  }
+  return _history[_idx];
+}
+
+const Line& History::backward() {
+  if (_idx > 0) {
+    --_idx;
+  }
+  return _history[_idx];
+}

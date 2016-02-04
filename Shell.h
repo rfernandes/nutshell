@@ -14,6 +14,7 @@ public:
 
   enum class Event {
     SHELL_EXIT,
+    PROMPT_REFRESH,
     PROMPT_DISPLAY,
     COMMAND_ERROR_NOT_FOUND,
     COMMAND_MATCHED,
@@ -31,6 +32,7 @@ private:
   Terminal _term;
   Prompt _prompt;
   Command _command;
+  Line _line;
   History _history;
   std::queue<Event> _events;
 };
