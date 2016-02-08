@@ -6,6 +6,7 @@
 #include "Prompt.h"
 #include "Command.h"
 #include "History.h"
+#include "Directory.h"
 
 #include <queue>
 
@@ -32,6 +33,7 @@ private:
   Line _line;
   History _history;
   Curses _curses;
+  Directory _directory;
   std::queue<Event> _events;
 };
 

@@ -11,8 +11,7 @@
 
 class Shell;
 
-class Command
-{
+class Command {
   using Execution = std::function<std::string(const std::string& params)>;
 
   Shell &_shell;
@@ -23,6 +22,8 @@ public:
   Command(Shell &shell);
   std::string operator()(const Line& line);
   bool matches(const Line& line) const;
+
+  void store(const std::string& name, Execution execution);
 };
 
 #endif

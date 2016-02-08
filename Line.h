@@ -23,6 +23,8 @@ public:
   void push(unsigned letter);
   void pop();
 
+  size_t parameterCount() const;
+
   bool empty() const;
   unsigned width() const;
 };

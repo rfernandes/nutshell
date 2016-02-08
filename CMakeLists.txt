@@ -14,11 +14,12 @@ find_package(Curses REQUIRED QUIET)
 add_executable(nutshell
 Command.cpp
 Curses.cpp
+Directory.cpp
 History.cpp
+Line.cpp
 Prompt.cpp
 Shell.cpp
 Terminal.cpp
-Line.cpp
 main.cpp
 )
 

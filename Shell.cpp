@@ -5,7 +5,9 @@
 using namespace std;
 
 Shell::Shell()
-: _command(*this){
+: _command{*this}
+, _directory{_command}
+{
   _prompt();
 }
 
@@ -87,7 +89,8 @@ int Shell::run() {
         auto matched = _command.matches(_line);
         _prompt();
         _curses << color(matched ? 2: 0) << _line.command() << reset;
-        _curses << _line.parameters();
+        if (_line.parameterCount())
+          _curses << ' ' <<  _line.parameters();
         break;
       }
     }

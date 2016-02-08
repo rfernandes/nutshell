@@ -17,11 +17,9 @@ const std::string & Line::command() const {
 }
 
 std::string Line::parameters() const {
-
   string ret;
   if (_segments.size() > 1) {
     stringstream ss;
-    ss << ' ';
     copy(_segments.begin() + 1, _segments.end(), ostream_iterator<string>(ss, " "));
     ret = ss.str();
     ret.resize(ret.size() - 1);
@@ -39,6 +37,10 @@ std::string Line::operator()() const{
 
 bool Line::empty() const {
   return _active->empty() && _segments.size() == 1;
+}
+
+size_t Line::parameterCount() const {
+  return _segments.size() - 1;
 }
 
 void Line::push(unsigned int letter){

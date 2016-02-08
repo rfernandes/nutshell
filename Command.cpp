@@ -30,7 +30,6 @@ namespace builtins {
   };
 }
 
-
 Command::Command(Shell &shell)
 : _shell{shell}
 , _path{"/usr/bin", "/home/c/System/bin"}
@@ -45,10 +44,10 @@ Command::Command(Shell &shell)
   for (const auto& dir: _path) {
     for (const auto& entry: fs::directory_iterator{dir}) {
       if (static_cast<bool>(entry.status().permissions() & fs::perms::others_exec)) {
-        _matches.emplace(entry.path().filename(),
-                         [=](const std::string& parameters){
-                           return exec(entry.path().string() + " " + parameters);
-                         });
+        store(entry.path().filename(),
+              [=](const std::string& parameters){
+                return exec(entry.path().string() + " " + parameters);
+              });
       }
     }
   }
@@ -68,4 +67,8 @@ string Command::operator()(const Line& line) {
     _shell.event(Shell::Event::COMMAND_ERROR_NOT_FOUND);
   }
   return ret;
+}
+
+void Command::store(const std::string& name, Execution execution) {
+  _matches.emplace(name, execution);
 }
