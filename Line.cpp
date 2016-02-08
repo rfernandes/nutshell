@@ -12,14 +12,29 @@ Line::Line()
 {
 }
 
+const std::string & Line::command() const {
+  return _segments.front();
+}
+
 std::string Line::parameters() const {
-  stringstream ss;
-  copy(_segments.begin() + 1, _segments.end(), ostream_iterator<string>(ss, " "));
-  string parameters = ss.str();
-  if (_segments.size() > 1){
-    parameters.resize(parameters.size() - 1);
+
+  string ret;
+  if (_segments.size() > 1) {
+    stringstream ss;
+    ss << ' ';
+    copy(_segments.begin() + 1, _segments.end(), ostream_iterator<string>(ss, " "));
+    ret = ss.str();
+    ret.resize(ret.size() - 1);
   }
-  return parameters;
+  return ret;
+}
+
+std::string Line::operator()() const{
+  stringstream ss;
+  copy(_segments.begin(), _segments.end(), ostream_iterator<string>(ss, " "));
+  string line = ss.str();
+  line.resize(line.size() - 1);
+  return line;
 }
 
 bool Line::empty() const {
@@ -45,10 +60,6 @@ void Line::pop() {
   } else if (_segments.size() > 1){
     _active = --_segments.erase(_active);
   }
-}
-
-const std::string & Line::command() const {
-  return _segments.front();
 }
 
 unsigned int Line::width() const {

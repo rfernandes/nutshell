@@ -1,6 +1,7 @@
 #ifndef SHELL_H
 #define SHELL_H
 
+#include "Curses.h"
 #include "Terminal.h"
 #include "Prompt.h"
 #include "Command.h"
@@ -8,17 +9,13 @@
 
 #include <queue>
 
-class Shell
-{
+class Shell {
 public:
 
   enum class Event {
     SHELL_EXIT,
-    PROMPT_REFRESH,
     PROMPT_DISPLAY,
     COMMAND_ERROR_NOT_FOUND,
-    COMMAND_MATCHED,
-    COMMAND_CLEAR_MATCHED,
   };
 
   Shell();
@@ -34,6 +31,7 @@ private:
   Command _command;
   Line _line;
   History _history;
+  Curses _curses;
   std::queue<Event> _events;
 };
 

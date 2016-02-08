@@ -13,6 +13,7 @@ find_package(Curses REQUIRED QUIET)
 
 add_executable(nutshell
 Command.cpp
+Curses.cpp
 History.cpp
 Prompt.cpp
 Shell.cpp

@@ -18,6 +18,8 @@ public:
   const std::string& command() const;
   std::string parameters() const;
 
+  std::string operator()() const;
+
   void push(unsigned letter);
   void pop();
 
