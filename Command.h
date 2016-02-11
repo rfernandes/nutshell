@@ -7,23 +7,35 @@
 #include <unordered_map>
 #include <functional>
 
-#include <experimental/filesystem>
-
-class Shell;
+class Curses;
 
 class Command {
-  using Execution = std::function<std::string(const std::string& params)>;
-
-  Shell &_shell;
-  std::vector<std::experimental::filesystem::path> _path;
-  std::unordered_map<std::string, Execution> _matches;
-
+  Command();
 public:
-  Command(Shell &shell);
-  std::string operator()(const Line& line);
+
+  static Command& instance();
+
+  enum class Status {
+    Ok,
+    CommandNotFound,
+  };
+  using Execution = std::function<Status(const Line& line, Curses& curses)>;
+
+  Status execute(const Line& line, Curses& curses);
   bool matches(const Line& line) const;
 
+  class Executable {
+    const std::string _name;
+  public:
+    Executable(const std::string& name);
+
+    Status operator()(const Line& line, Curses& curses);
+  };
+
   void store(const std::string& name, Execution execution);
+
+public:
+  std::unordered_map<std::string, Execution> _matches;
 };
 
 #endif

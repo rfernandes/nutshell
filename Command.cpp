@@ -2,71 +2,54 @@
 
 #include "Shell.h"
 
-#include <experimental/filesystem>
-
-#include <iostream>
-#include <iterator>
-#include <algorithm>
-#include <memory>
-
 using namespace std;
-namespace fs = std::experimental::filesystem;
 
-string exec(const std::string& cmd) {
-  unique_ptr<FILE, decltype(&pclose)> pipe{popen(cmd.data(), "r"), pclose};
-  if (!pipe) return "ERROR";
-  char buffer[128];
+// Pipe to capture output
+Command::Status execute(const Line &line, Curses& curses) {
+  unique_ptr<FILE, decltype(&pclose)> pipe{popen((line.command() + " " + line.parameters()).data(), "r"), pclose};
+  if (!pipe){
+    throw std::runtime_error("Unable to fork/pipe");
+  }
+  constexpr size_t bufferSize{128};
+  char buffer[bufferSize];
   string result;
   while (!feof(pipe.get())) {
-    if (fgets(buffer, 128, pipe.get()) != NULL)
-      result += buffer;
+    if (fgets(buffer, bufferSize, pipe.get()) != NULL)
+      curses << buffer;
   }
-  return result;
+  return Command::Status::Ok;
 }
 
-namespace builtins {
-  static auto help = [](const std::string& /*params*/){
-    return "No one can help you (for now)\n";
-  };
-}
+Command::Command() = default;
 
-Command::Command(Shell &shell)
-: _shell{shell}
-, _path{"/usr/bin", "/home/c/System/bin"}
-, _matches{
-    {"help", builtins::help},
-    {"exit", [&](const std::string& /*params*/){
-      _shell.event(Shell::Event::SHELL_EXIT);
-      return "";
-    }}
-  }
+Command::Executable::Executable(const std::string& name)
+: _name{name}
 {
-  for (const auto& dir: _path) {
-    for (const auto& entry: fs::directory_iterator{dir}) {
-      if (static_cast<bool>(entry.status().permissions() & fs::perms::others_exec)) {
-        store(entry.path().filename(),
-              [=](const std::string& parameters){
-                return exec(entry.path().string() + " " + parameters);
-              });
-      }
-    }
-  }
+}
+
+Command::Status Command::Executable::operator()(const Line& line, Curses& curses)
+{
+  return ::execute(line, curses);
+}
+
+Command& Command::instance() {
+  static Command instance;
+  return instance;
 }
 
 bool Command::matches(const Line& line) const {
   return _matches.count(line.command());
 }
 
-string Command::operator()(const Line& line) {
-  string ret;
-  //FIXME add assert(!line.parameters.empty())
+Command::Status Command::execute(const Line& line, Curses& curses) {
   auto command_it(_matches.find(line.command()));
   if (command_it != _matches.end()) {
-    ret = command_it->second(line.parameters());
+    command_it->second(line, curses);
+    return Status::Ok;
   } else if (!line.command().empty()){
-    _shell.event(Shell::Event::COMMAND_ERROR_NOT_FOUND);
+    return Status::CommandNotFound;
   }
-  return ret;
+  return Status::CommandNotFound; // FIXME: invalid default
 }
 
 void Command::store(const std::string& name, Execution execution) {

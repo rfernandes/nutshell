@@ -6,16 +6,16 @@
 
 class Line
 {
+public:
   using Segments = std::vector<std::string>;
 
-  Segments _segments;
-  Segments::iterator _active;
-
-public:
-
   Line();
+  Line(std::initializer_list<std::string> segmengs);
 
   const std::string& command() const;
+  const Segments& segments() const;
+
+
   std::string parameters() const;
 
   std::string operator()() const;
@@ -27,6 +27,10 @@ public:
 
   bool empty() const;
   unsigned width() const;
+
+private:
+  Segments _segments;
+  Segments::iterator _active;
 };
 
 #endif

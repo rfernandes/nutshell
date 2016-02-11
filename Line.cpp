@@ -12,8 +12,18 @@ Line::Line()
 {
 }
 
+Line::Line(initializer_list<string> segments)
+: _segments{segments}
+, _active{_segments.begin()}
+{
+}
+
 const std::string & Line::command() const {
   return _segments.front();
+}
+
+const Line::Segments& Line::segments() const{
+  return _segments;
 }
 
 std::string Line::parameters() const {

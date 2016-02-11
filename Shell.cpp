@@ -1,30 +1,50 @@
 #include "Shell.h"
+#include "Command.h"
 
+//FIXME: Work towards removing this and relying solely on Curses.h
 #include <ncurses.h>
 
 using namespace std;
 
 Shell::Shell()
-: _command{*this}
-, _directory{_command}
+: _command(Command::instance())
+, _exit{false}
 {
+  _command.store("exit",
+                 [&](const Line& /*line*/, Curses& /*curses*/){
+                   _exit = true;
+                   return Command::Status::Ok;
+                 });
+
+  _command.store("help",
+                 [](const Line& /*line*/, Curses& curses){
+                   curses << "No one can help you (for now)\n";
+                   return Command::Status::Ok;
+                 });
   _prompt();
 }
 
-void Shell::event(Event event)
-{
-  _events.push(event);
-}
-
 int Shell::run() {
-  while (unsigned keystroke = _curses.get()) {
+  unsigned keystroke;
+  while (!_exit && (keystroke = _curses.get())) {
     _curses.refresh();
     switch (keystroke) {
       case '\n':
-        _curses << '\n' << _command(_line);
+        _curses << '\n';
+        try{
+          switch (_command.execute(_line, _curses)) {
+            case Command::Status::CommandNotFound:
+              _curses << "Command not found [" << _line.command() << "]\n";
+              break;
+            case Command::Status::Ok:
+              break;
+          }
+        } catch (std::exception& ex) {
+          _curses << "Error " << ex.what() << "\n";
+        }
         _history.add(_line);
         _line = Line{};
-        event(Event::PROMPT_DISPLAY);
+        _prompt();
         break;
       case 127:
       case KEY_BACKSPACE:
@@ -73,7 +93,7 @@ int Shell::run() {
         _curses << "History interactive mode unimplemented\n";
         break;
       case 4: //Ctrl-D
-        event(Event::SHELL_EXIT);
+        _exit = true;
         break;
       case KEY_RESIZE:
         break; // ignore list
@@ -94,24 +114,8 @@ int Shell::run() {
         break;
       }
     }
-
-    while (!_events.empty()) {
-      auto event =_events.front();
-      _events.pop();
-      switch (event) {
-        case Event::COMMAND_ERROR_NOT_FOUND:
-          _curses << "NutShell: command not found\n";
-          break;
-        case Event::PROMPT_DISPLAY:
-          _prompt();
-          break;
-        case Event::SHELL_EXIT:
-          goto EXIT;
-      }
-    }
     refresh();
   }
-EXIT:
   return 0;
 }
 

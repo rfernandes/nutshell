@@ -17,6 +17,7 @@ Curses.cpp
 Directory.cpp
 History.cpp
 Line.cpp
+Path.cpp
 Prompt.cpp
 Shell.cpp
 Terminal.cpp

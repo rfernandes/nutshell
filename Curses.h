@@ -1,6 +1,7 @@
 #ifndef CURSES_H
 #define CURSES_H
 
+#include <type_traits>
 #include <string>
 
 class Curses {
@@ -9,7 +10,6 @@ public:
 
   unsigned get();
   void refresh();
-
 };
 
 namespace curses_manip {
@@ -27,6 +27,13 @@ Curses& reset(Curses& curses);
 
 Curses& operator << (Curses& curses, const std::string& str);
 Curses& operator << (Curses& curses, char ch);
+
+template <typename Integer,
+          typename = std::enable_if_t<std::is_integral<Integer>::value>>
+Curses& operator << (Curses& curses, Integer integral){
+  return curses << std::to_string(integral);
+}
+
 Curses& operator << (Curses& curses, Curses& (*pf)(Curses &));
 
 Curses& operator << (Curses& curses, const curses_manip::color& obj);

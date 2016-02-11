@@ -3,6 +3,7 @@
 
 #include <ncurses.h>
 
+using namespace std;
 
 namespace curses_manip {
 
@@ -34,7 +35,7 @@ void Curses::refresh() {
   ::refresh();
 }
 
-Curses& operator << (Curses& curses, const std::string& str) {
+Curses& operator << (Curses& curses, const string& str) {
   addstr(str.data());
   return curses;
 }
