@@ -35,6 +35,11 @@ void Curses::refresh() {
   ::refresh();
 }
 
+Curses& operator << (Curses& curses, const char * cstr) {
+  addstr(cstr);
+  return curses;
+}
+
 Curses& operator << (Curses& curses, const string& str) {
   addstr(str.data());
   return curses;

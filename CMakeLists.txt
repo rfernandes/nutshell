@@ -15,9 +15,11 @@ add_executable(nutshell
 Command.cpp
 Curses.cpp
 Directory.cpp
+Executable.cpp
 History.cpp
 Line.cpp
 Path.cpp
+Pid.cpp
 Prompt.cpp
 Shell.cpp
 Terminal.cpp

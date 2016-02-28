@@ -6,21 +6,52 @@
 
 using namespace std;
 
+class BuiltIn: public Command
+{
+public:
+  using Function = function<Command::Status(const Line&, Curses&)>;
+
+  BuiltIn(string command, Function function)
+  : _command{move(command)}
+  , _function{move(function)}
+  {
+  }
+
+  ~BuiltIn() override = default;
+
+  bool matches(const Line& line) const override {
+    return line.command() == _command;
+  }
+
+  Suggestions suggestions(const Line& line) const override {
+    const auto& command = line.command();
+    return _command.compare(0, command.size(), command) == 0 ? Suggestions{_command} : Suggestions{};
+  }
+
+  Command::Status execute(const Line& line, Curses& curses) override {
+    return matches(line) ? _function(line, curses) : Command::Status::NoMatch;
+  }
+
+private:
+  const string _command;
+  const Function _function;
+};
+
 Shell::Shell()
-: _command(Command::instance())
+: _store(CommandStore::instance())
 , _exit{false}
 {
-  _command.store("exit",
-                 [&](const Line& /*line*/, Curses& /*curses*/){
-                   _exit = true;
-                   return Command::Status::Ok;
-                 });
+  CommandStore::store<BuiltIn>("exit",
+                               [&](const Line& /*line*/, Curses& /*curses*/){
+                                 _exit = true;
+                                 return Command::Status::Ok;
+                               });
 
-  _command.store("help",
-                 [](const Line& /*line*/, Curses& curses){
-                   curses << "No one can help you (for now)\n";
-                   return Command::Status::Ok;
-                 });
+  CommandStore::store<BuiltIn>("help",
+                               [](const Line& /*line*/, Curses& curses){
+                                 curses << "No one can help you (for now)\n";
+                                 return Command::Status::Ok;
+                               });
   _prompt();
 }
 
@@ -32,20 +63,34 @@ int Shell::run() {
       case '\n':
         _curses << '\n';
         try{
-          switch (_command.execute(_line, _curses)) {
-            case Command::Status::CommandNotFound:
+          switch (_store.execute(_line, _curses)) {
+            case Command::Status::NoMatch:
               _curses << "Command not found [" << _line.command() << "]\n";
               break;
             case Command::Status::Ok:
               break;
           }
-        } catch (std::exception& ex) {
+        } catch (exception& ex) {
           _curses << "Error " << ex.what() << "\n";
         }
         _history.add(_line);
         _line = Line{};
         _prompt();
         break;
+      case   9: { // Tab
+        const auto& suggestions = _store.suggestions(_line);
+        if (!suggestions.empty()) {
+          if (suggestions.size() == 1)
+          {
+            _line = {suggestions.at(0)};
+          }
+          for (auto& suggestion: suggestions) {
+            _curses << " " << suggestion;
+          }
+          _curses << "\n";
+        }
+        break;
+      }
       case 127:
       case KEY_BACKSPACE:
         {
@@ -106,7 +151,7 @@ int Shell::run() {
         getyx(stdscr, y, x);
         deleteln();
         move(y,0);
-        auto matched = _command.matches(_line);
+        auto matched = _store.matches(_line);
         _prompt();
         _curses << color(matched ? 2: 0) << _line.command() << reset;
         if (_line.parameterCount())

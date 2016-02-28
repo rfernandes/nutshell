@@ -25,6 +25,7 @@ Curses& reset(Curses& curses);
 
 } // namespace curses_manip
 
+Curses& operator << (Curses& curses, const char * cstr);
 Curses& operator << (Curses& curses, const std::string& str);
 Curses& operator << (Curses& curses, char ch);
 
