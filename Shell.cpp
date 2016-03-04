@@ -95,40 +95,37 @@ int Shell::run() {
       case KEY_BACKSPACE:
         {
           if (_line.empty()) break;
-          unsigned x, y;
-          getyx(stdscr, y, x);
-          move(y,x-1);
+          _cursor.left(1);
         }
       case KEY_DC:
         _line.pop();
-        delch();
+//         delch();
         break;
       case KEY_LEFT:
       case KEY_RIGHT:
       {
-        unsigned x, y;
-        getyx(stdscr, y, x);
-        move(y, keystroke == KEY_LEFT ? max(x - 1, _prompt.width() - 1)
-                                      : min(x + 1, _prompt.width() - 1 + _line.width()));
+        auto pos = _cursor.position();
+        pos.x = keystroke == KEY_LEFT ? max(pos.x - 1, _prompt.width() - 1)
+                                      : min(pos.x + 1, _prompt.width() - 1 + _line.width());
+        _cursor.position(pos);
         break;
       }
       case KEY_HOME:
       case KEY_END:
       {
-        unsigned x, y;
-        getyx(stdscr, y, x);
-        move(y, keystroke == KEY_HOME ? _prompt.width() - 1
-                                      : _prompt.width() - 1 + _line.width());
+        auto pos = _cursor.position();
+        pos.x = keystroke == KEY_HOME ? _prompt.width() - 1
+                                      : _prompt.width() - 1 + _line.width();
+        _cursor.position(pos);
         break;
       }
       case KEY_DOWN:
       case KEY_UP:
       {
         _line = keystroke == KEY_DOWN ? _history.forward() : _history.backward();
-        unsigned x,y;
-        getyx(stdscr, y, x);
-        deleteln();
-        move(y,0);
+        auto pos = _cursor.position();
+        pos.x = 0;
+        _cursor.position(pos);
         _prompt();
         _curses << _line();
         break;
@@ -146,11 +143,9 @@ int Shell::run() {
       {
         using namespace curses_manip;
         _line.push(keystroke);
-        _curses << keystroke;
-        unsigned x,y;
-        getyx(stdscr, y, x);
-        deleteln();
-        move(y,0);
+        auto pos = _cursor.position();
+        pos.x = 0;
+        _cursor.position(pos);
         auto matched = _store.matches(_line);
         _prompt();
         _curses << color(matched ? 2: 0) << _line.command() << reset;
@@ -159,7 +154,7 @@ int Shell::run() {
         break;
       }
     }
-    refresh();
+    _curses.refresh();
   }
   return 0;
 }

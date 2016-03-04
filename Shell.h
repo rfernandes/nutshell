@@ -22,6 +22,7 @@ private:
   Line _line;
   History _history;
   Curses _curses;
+  Cursor _cursor;
   Path _path;
   CommandStore& _store;
   bool _exit;
