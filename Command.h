@@ -8,7 +8,7 @@
 #include <functional>
 #include <memory>
 
-class Curses;
+class Output;
 
 class Command {
 public:
@@ -21,7 +21,7 @@ public:
     Ok,
   };
 
-  virtual Status execute(const Line& line, Curses& curses) = 0;
+  virtual Status execute(const Line& line, Output& out) = 0;
   virtual bool matches(const Line& line) const = 0;
   virtual Suggestions suggestions(const Line& line) const = 0;
 };
@@ -41,7 +41,7 @@ private:
 
   bool matches(const Line& line) const;
   Command::Suggestions suggestions(const Line& line) const;
-  Command::Status execute(const Line& line, Curses& curses);
+  Command::Status execute(const Line& line, Output& output);
 
   friend class Shell;
 };

@@ -1,12 +1,12 @@
 #include "Executable.h"
 
-#include "Curses.h"
+#include "Output.h"
 
 using namespace std;
 
 namespace {
   // Pipe to capture output
-  Command::Status launch(const Line &line, Curses& curses) {
+  Command::Status launch(const Line &line, Output& out) {
     unique_ptr<FILE, decltype(&pclose)> pipe{popen((line.command() + " " + line.parameters()).data(), "r"), pclose};
     if (!pipe){
       throw std::runtime_error("Unable to fork/pipe");
@@ -15,7 +15,7 @@ namespace {
     char buffer[bufferSize];
     while (!feof(pipe.get())) {
       if (fgets(buffer, bufferSize, pipe.get()) != NULL) {
-        curses << buffer;
+        out << buffer;
       }
     }
     return Command::Status::Ok;
@@ -39,8 +39,8 @@ Command::Suggestions Executable::suggestions(const Line& line) const
   return path.compare(0, command.size(), command) == 0 ? Suggestions{path} : Suggestions{};
 }
 
-Command::Status Executable::execute(const Line& line, Curses& curses)
+Command::Status Executable::execute(const Line& line, Output& out)
 {
-  return matches(line) ? launch(line, curses)
+  return matches(line) ? launch(line, out)
                        : Command::Status::NoMatch;
 }

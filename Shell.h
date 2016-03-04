@@ -2,11 +2,12 @@
 #define SHELL_H
 
 #include "Command.h"
-#include "Curses.h"
-#include "Terminal.h"
+#include "Cursor.h"
+#include "History.h"
+#include "Output.h"
 #include "Path.h"
 #include "Prompt.h"
-#include "History.h"
+#include "Terminal.h"
 
 class Command;
 
@@ -21,7 +22,7 @@ private:
   Prompt _prompt;
   Line _line;
   History _history;
-  Curses _curses;
+  Output _out;
   Cursor _cursor;
   Path _path;
   CommandStore& _store;

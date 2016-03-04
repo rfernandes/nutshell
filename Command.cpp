@@ -26,10 +26,10 @@ Command::Suggestions CommandStore::suggestions(const Line& line) const {
   return ret;
 }
 
-Command::Status CommandStore::execute(const Line& line, Curses& curses) {
+Command::Status CommandStore::execute(const Line& line, Output& out) {
   Command::Status ret {Command::Status::NoMatch};
   for (auto &command: _commands) {
-    ret = command->execute(line, curses);
+    ret = command->execute(line, out);
     if (ret != Command::Status::NoMatch) {
       break;
     }

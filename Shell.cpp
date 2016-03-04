@@ -9,7 +9,7 @@ using namespace std;
 class BuiltIn: public Command
 {
 public:
-  using Function = function<Command::Status(const Line&, Curses&)>;
+  using Function = function<Command::Status(const Line&, Output&)>;
 
   BuiltIn(string command, Function function)
   : _command{move(command)}
@@ -28,8 +28,8 @@ public:
     return _command.compare(0, command.size(), command) == 0 ? Suggestions{_command} : Suggestions{};
   }
 
-  Command::Status execute(const Line& line, Curses& curses) override {
-    return matches(line) ? _function(line, curses) : Command::Status::NoMatch;
+  Command::Status execute(const Line& line, Output& out) override {
+    return matches(line) ? _function(line, out) : Command::Status::NoMatch;
   }
 
 private:
@@ -42,14 +42,14 @@ Shell::Shell()
 , _exit{false}
 {
   CommandStore::store<BuiltIn>("exit",
-                               [&](const Line& /*line*/, Curses& /*curses*/){
+                               [&](const Line& /*line*/, Output& /*output*/){
                                  _exit = true;
                                  return Command::Status::Ok;
                                });
 
   CommandStore::store<BuiltIn>("help",
-                               [](const Line& /*line*/, Curses& curses){
-                                 curses << "No one can help you (for now)\n";
+                               [](const Line& /*line*/, Output& output){
+                                 output << "No one can help you (for now)\n";
                                  return Command::Status::Ok;
                                });
   _prompt();
@@ -57,21 +57,21 @@ Shell::Shell()
 
 int Shell::run() {
   unsigned keystroke;
-  while (!_exit && (keystroke = _curses.get())) {
-    _curses.refresh();
+  while (!_exit && (keystroke = _out.get())) {
+    _out.refresh();
     switch (keystroke) {
       case '\n':
-        _curses << '\n';
+        _out << '\n';
         try{
-          switch (_store.execute(_line, _curses)) {
+          switch (_store.execute(_line, _out)) {
             case Command::Status::NoMatch:
-              _curses << "Command not found [" << _line.command() << "]\n";
+              _out << "Command not found [" << _line.command() << "]\n";
               break;
             case Command::Status::Ok:
               break;
           }
         } catch (exception& ex) {
-          _curses << "Error " << ex.what() << "\n";
+          _out << "Error " << ex.what() << "\n";
         }
         _history.add(_line);
         _line = Line{};
@@ -85,9 +85,9 @@ int Shell::run() {
             _line = {suggestions.at(0)};
           }
           for (auto& suggestion: suggestions) {
-            _curses << " " << suggestion;
+            _out << " " << suggestion;
           }
-          _curses << "\n";
+          _out << "\n";
         }
         break;
       }
@@ -99,17 +99,15 @@ int Shell::run() {
         }
       case KEY_DC:
         _line.pop();
-//         delch();
         break;
       case KEY_LEFT:
-      case KEY_RIGHT:
-      {
-        auto pos = _cursor.position();
-        pos.x = keystroke == KEY_LEFT ? max(pos.x - 1, _prompt.width() - 1)
-                                      : min(pos.x + 1, _prompt.width() - 1 + _line.width());
-        _cursor.position(pos);
+        if (_cursor.position().x > _prompt.width() - 1)
+          _cursor.left();
         break;
-      }
+      case KEY_RIGHT:
+        if (_cursor.position().x < _prompt.width() - 1 + _line.width())
+          _cursor.right();
+        break;
       case KEY_HOME:
       case KEY_END:
       {
@@ -127,12 +125,12 @@ int Shell::run() {
         pos.x = 0;
         _cursor.position(pos);
         _prompt();
-        _curses << _line();
+        _out << _line();
         break;
       }
       case 3: //Ctrl-C
       case 18: //Ctrl-R
-        _curses << "History interactive mode unimplemented\n";
+        _out << "History interactive mode unimplemented\n";
         break;
       case 4: //Ctrl-D
         _exit = true;
@@ -141,20 +139,20 @@ int Shell::run() {
         break; // ignore list
       default:
       {
-        using namespace curses_manip;
+        using namespace manip;
         _line.push(keystroke);
         auto pos = _cursor.position();
         pos.x = 0;
         _cursor.position(pos);
         auto matched = _store.matches(_line);
         _prompt();
-        _curses << color(matched ? 2: 0) << _line.command() << reset;
+        _out << color(matched ? 2: 0) << _line.command() << reset;
         if (_line.parameterCount())
-          _curses << ' ' <<  _line.parameters();
+          _out << ' ' <<  _line.parameters();
         break;
       }
     }
-    _curses.refresh();
+    _out.refresh();
   }
   return 0;
 }

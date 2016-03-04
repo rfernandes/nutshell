@@ -1,7 +1,7 @@
 #include "Pid.h"
 
 #include "Command.h"
-#include "Curses.h"
+#include "Output.h"
 
 #include <algorithm>
 #include <unistd.h>
@@ -77,7 +77,7 @@ Command::Suggestions Pid::suggestions(const Line & /*line*/) const {
   return {};
 }
 
-Command::Status Pid::execute(const Line & line, Curses & curses){
+Command::Status Pid::execute(const Line & line, Output & curses){
   string command = line();
 
   auto iter = command.begin();
