@@ -1,7 +1,5 @@
 #include "Executable.h"
 
-#include "Output.h"
-
 using namespace std;
 
 namespace {

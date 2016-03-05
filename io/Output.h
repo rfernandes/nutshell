@@ -2,8 +2,6 @@
 #define OUTPUT_H
 
 #include <iostream>
-#include <type_traits>
-#include <string>
 
 namespace manip {
 

@@ -1,7 +1,5 @@
 #include "Command.h"
 
-#include "Shell.h"
-
 #include <algorithm>
 
 using namespace std;

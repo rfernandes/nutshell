@@ -1,12 +1,10 @@
 #ifndef COMMAND_H
 #define COMMAND_H
 
-#include "Line.h"
-#include "Output.h"
+#include <shell/Line.h>
+#include <io/Output.h>
 
 #include <unordered_set>
-#include <unordered_map>
-#include <functional>
 #include <memory>
 
 class Command {

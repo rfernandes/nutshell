@@ -1,7 +1,7 @@
 #ifndef HISTORY
 #define HISTORY
 
-#include "Line.h"
+#include <shell/Line.h>
 
 class History
 {

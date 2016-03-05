@@ -1,7 +1,7 @@
 #ifndef PID_H
 #define PID_H
 
-#include "Command.h"
+#include <command/Command.h>
 
 class Pid : public Command{
 public:

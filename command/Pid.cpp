@@ -1,24 +1,11 @@
 #include "Pid.h"
 
-#include "Command.h"
-#include "Output.h"
-
-#include <algorithm>
-#include <unistd.h>
-
-#include <sys/types.h>
 #include <signal.h>
 
 #include <experimental/filesystem>
 
 #include <boost/spirit/home/x3.hpp>
-#include <boost/tuple/tuple.hpp>
-#include <boost/optional.hpp>
-#include <boost/optional/optional_io.hpp>
-#include <boost/variant.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
-#include <boost/fusion/include/as_vector.hpp>
-#include <boost/fusion/include/io.hpp>
 
 using namespace std;
 using namespace std::experimental::filesystem;

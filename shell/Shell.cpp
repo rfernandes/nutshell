@@ -1,5 +1,6 @@
 #include "Shell.h"
-#include "Command.h"
+
+#include <command/Command.h>
 
 using namespace std;
 using namespace manip;

@@ -1,15 +1,14 @@
 #ifndef SHELL_H
 #define SHELL_H
 
-#include "Command.h"
-#include "Cursor.h"
-#include "History.h"
-#include "Input.h"
-#include "Output.h"
-#include "Path.h"
-#include "Prompt.h"
+#include <io/Cursor.h>
+#include <io/Input.h>
+#include <io/Output.h>
+#include <shell/History.h>
+#include <shell/Path.h>
+#include <shell/Prompt.h>
 
-class Command;
+class CommandStore;
 
 class Shell {
 public:

@@ -1,12 +1,9 @@
 #ifndef DIRECTORY_H
 #define DIRECTORY_H
 
-#include "Command.h"
-#include "Line.h"
-#include "Output.h"
+#include <command/Command.h>
 
 #include <experimental/filesystem>
-
 
 class Cd: public Command {
   using path = std::experimental::filesystem::path;

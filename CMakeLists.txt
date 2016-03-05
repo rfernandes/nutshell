@@ -9,24 +9,24 @@ add_definitions(
 )
 
 add_executable(nutshell
-Command.cpp
-Cursor.cpp
-Input.cpp
-Output.cpp
-Directory.cpp
-Executable.cpp
-History.cpp
-Line.cpp
-ParseLine.cpp
-Path.cpp
-Pid.cpp
-Prompt.cpp
-Shell.cpp
+command/Command.cpp
+command/Directory.cpp
+command/Executable.cpp
+command/Pid.cpp
+io/Cursor.cpp
+io/Input.cpp
+io/Output.cpp
 main.cpp
+shell/History.cpp
+shell/Line.cpp
+shell/Path.cpp
+shell/Prompt.cpp
+shell/Shell.cpp
 )
 
 target_include_directories(nutshell
 PRIVATE
+${CMAKE_SOURCE_DIR}
 )
 
 target_link_libraries(nutshell

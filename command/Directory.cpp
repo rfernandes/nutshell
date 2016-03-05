@@ -1,17 +1,8 @@
 #include "Directory.h"
 
-#include "Command.h"
-
 #include <boost/spirit/home/x3.hpp>
-#include <boost/tuple/tuple.hpp>
-#include <boost/optional.hpp>
-#include <boost/optional/optional_io.hpp>
-#include <boost/variant.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
-#include <boost/fusion/include/as_vector.hpp>
-#include <boost/fusion/include/io.hpp>
 
-#include <unistd.h>
 #include <pwd.h>
 
 using namespace std;
