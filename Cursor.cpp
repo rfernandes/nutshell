@@ -1,43 +1,43 @@
 #include "Cursor.h"
 
-#include <ncurses.h>
+#include <iostream>
 
-void Cursor::up(unsigned rows)
-{
-  unsigned y, x;
-  getyx(stdscr, y, x);
-  ::move(y + rows, x);
+using namespace std;
+
+void Cursor::up(unsigned rows) {
+  cout << "\x1b[" << rows << 'A';
 }
 
-void Cursor::down(unsigned rows)
-{
-  unsigned y, x;
-  getyx(stdscr, y, x);
-  ::move(y - rows, x);
+void Cursor::down(unsigned rows) {
+  cout << "\x1b[" << rows << 'B';
 }
 
-void Cursor::left(unsigned columns)
-{
-  unsigned y, x;
-  getyx(stdscr, y, x);
-  ::move(y, x - columns);
+void Cursor::left(unsigned columns) {
+  cout << "\x1b[" << columns << 'D';
 }
 
-void Cursor::right(unsigned columns)
-{
-  unsigned y, x;
-  getyx(stdscr, y, x);
-  ::move(y, x + columns);
+void Cursor::right(unsigned columns) {
+  cout << "\x1b[" << columns << 'C';
 }
 
-void Cursor::position(Cursor::Position position)
-{
-  ::move(position.y, position.x);
+void Cursor::position(Cursor::Position position) {
+  cout << "\x1b[" << position.y << ';' << position.x  << 'H';
 }
 
-Cursor::Position Cursor::position() const
+Cursor::Position Cursor::position() const {
+  cout << "\x1b[6n";
+  cin.get(); // ^
+  cin.get(); // [
+  unsigned y;
+  cin >> y;
+  cin.get(); // ;
+  unsigned x;
+  cin >> x;
+  cin.get(); // R
+  return {x, y};
+}
+
+void Cursor::column(unsigned int column)
 {
-  Position ret;
-  getyx(stdscr, ret.y, ret.x);
-  return ret;
+  cout << "\x1b[" << column << 'G'; // Non ANSI
 }

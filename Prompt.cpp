@@ -1,18 +1,16 @@
 #include "Prompt.h"
 
-#include <ncurses.h>
+#include <iostream>
+
+using namespace std;
 
 Prompt::Prompt()
 : _prompt{"NutShell 0.1α >"}
 {
-  init_pair(1, COLOR_BLUE, -1);  // ColorPair 1 is for prompt
-  init_pair(2, COLOR_GREEN, -1); // ColorPair 2 is for matching commands
 }
 
 void Prompt::operator()() const {
-  attron(COLOR_PAIR(1));
-  addstr(_prompt.data());
-  attroff(COLOR_PAIR(1));
+  cout << "\x1b[38;2;150;150;230m" << _prompt.data() << "\x1b[0m";
 }
 
 unsigned Prompt::width() const{

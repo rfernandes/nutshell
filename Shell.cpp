@@ -1,10 +1,8 @@
 #include "Shell.h"
 #include "Command.h"
 
-//FIXME: Work towards removing this and relying solely on Curses.h
-#include <ncurses.h>
-
 using namespace std;
+using namespace manip;
 
 class BuiltIn: public Command
 {
@@ -39,8 +37,11 @@ private:
 
 Shell::Shell()
 : _store(CommandStore::instance())
+, _out{cout}
 , _exit{false}
 {
+  setlocale(LC_ALL, "");
+
   CommandStore::store<BuiltIn>("exit",
                                [&](const Line& /*line*/, Output& /*output*/){
                                  _exit = true;
@@ -57,8 +58,7 @@ Shell::Shell()
 
 int Shell::run() {
   unsigned keystroke;
-  while (!_exit && (keystroke = _out.get())) {
-    _out.refresh();
+  while (!_exit && (keystroke = _in.get())) {
     switch (keystroke) {
       case '\n':
         _out << '\n';
@@ -77,11 +77,10 @@ int Shell::run() {
         _line = Line{};
         _prompt();
         break;
-      case   9: { // Tab
+      case '\t': { // Tab
         const auto& suggestions = _store.suggestions(_line);
         if (!suggestions.empty()) {
-          if (suggestions.size() == 1)
-          {
+          if (suggestions.size() == 1) {
             _line = {suggestions.at(0)};
           }
           for (auto& suggestion: suggestions) {
@@ -91,68 +90,64 @@ int Shell::run() {
         }
         break;
       }
-      case 127:
-      case KEY_BACKSPACE:
-        {
-          if (_line.empty()) break;
-          _cursor.left(1);
-        }
-      case KEY_DC:
+      case Input::Backspace:
+      case '\b': { // Ctrl-H
+        if (_line.empty()) break;
+        _cursor.left();
+      }
+      case Input::Delete:
         _line.pop();
+        _out << erase(CursorToEnd);
         break;
-      case KEY_LEFT:
-        if (_cursor.position().x > _prompt.width() - 1)
+      case Input::Left:
+        if (_cursor.position().x > _prompt.width())
           _cursor.left();
         break;
-      case KEY_RIGHT:
-        if (_cursor.position().x < _prompt.width() - 1 + _line.width())
+      case Input::Right:
+        if (_cursor.position().x < _prompt.width() + _line.width())
           _cursor.right();
         break;
-      case KEY_HOME:
-      case KEY_END:
-      {
-        auto pos = _cursor.position();
-        pos.x = keystroke == KEY_HOME ? _prompt.width() - 1
-                                      : _prompt.width() - 1 + _line.width();
-        _cursor.position(pos);
-        break;
-      }
-      case KEY_DOWN:
-      case KEY_UP:
-      {
-        _line = keystroke == KEY_DOWN ? _history.forward() : _history.backward();
-        auto pos = _cursor.position();
-        pos.x = 0;
-        _cursor.position(pos);
+      case Input::Up:
+      case Input::Down: {
+        _line = keystroke == Input::Down ? _history.forward() : _history.backward();
+        _cursor.column();
         _prompt();
-        _out << _line();
+        _out << _line() << erase(CursorToEnd);
         break;
       }
-      case 3: //Ctrl-C
+      case Input::Home:
+      case Input::End: {
+        auto column = keystroke == Input::Home ? _prompt.width()
+                                         : _prompt.width() + _line.width();
+        _cursor.column(column);
+        break;
+      }
       case 18: //Ctrl-R
         _out << "History interactive mode unimplemented\n";
         break;
       case 4: //Ctrl-D
         _exit = true;
         break;
-      case KEY_RESIZE:
+      case Input::Unknown: // Unknown special key received
         break; // ignore list
-      default:
-      {
-        using namespace manip;
+      default: {
         _line.push(keystroke);
-        auto pos = _cursor.position();
-        pos.x = 0;
-        _cursor.position(pos);
-        auto matched = _store.matches(_line);
+        _cursor.column();
         _prompt();
-        _out << color(matched ? 2: 0) << _line.command() << reset;
-        if (_line.parameterCount())
+        auto matched = _store.matches(_line);
+        if (matched){
+          _out << color(Green);
+        }
+        _out << _line.command();
+        if (matched){
+          _out << color(Reset);
+        }
+        if (_line.parameterCount()) {
           _out << ' ' <<  _line.parameters();
+        }
         break;
       }
     }
-    _out.refresh();
   }
   return 0;
 }

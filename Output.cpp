@@ -1,55 +1,20 @@
 #include "Output.h"
-#include "Command.h"
-
-#include <ncurses.h>
 
 using namespace std;
 
 namespace manip {
 
-color::color(unsigned int pairId)
-:_pairId{pairId}
-{
+std::ostream& operator<< (std::ostream& out, const erase& manip) {
+  return out << "\x1b[" << manip._eraseType << 'K';
 }
 
-unsigned color::pairId() const {
-  return _pairId;
+std::ostream& operator<< (std::ostream& out, const color& manip) {
+  if (manip._color == Reset) {
+    out << "\x1b[39;49m";
+  } else {
+    out << "\x1b[3" << manip._color << 'm';
+  }
+  return out;
 }
 
-Output& reset(Output& curses) {
-  standend();
-  return curses;
-}
-
-} // namespace curses_manip
-
-Output::Output() {
-  curs_set(1);
-}
-
-unsigned Output::get() {
-  return getch();
-}
-
-void Output::refresh() {
-  ::refresh();
-}
-
-Output& operator << (Output& curses, const string& str) {
-  addstr(str.data());
-  return curses;
-}
-
-Output& operator << (Output& curses, char ch) {
-  addch(ch);
-  return curses;
-}
-
-Output& operator << (Output& curses, const manip::color& obj) {
-  attron(COLOR_PAIR(obj.pairId()));
-  return curses;
-}
-
-Output& operator << (Output& curses, Output& (*pf)(Output &)) {
-  return pf(curses);
 }

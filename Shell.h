@@ -4,10 +4,10 @@
 #include "Command.h"
 #include "Cursor.h"
 #include "History.h"
+#include "Input.h"
 #include "Output.h"
 #include "Path.h"
 #include "Prompt.h"
-#include "Terminal.h"
 
 class Command;
 
@@ -18,14 +18,14 @@ public:
   int run();
 
 private:
-  Terminal _term;
+  CommandStore& _store;
   Prompt _prompt;
   Line _line;
   History _history;
-  Output _out;
+  Input _in;
+  Output& _out;
   Cursor _cursor;
   Path _path;
-  CommandStore& _store;
   bool _exit;
 };
 

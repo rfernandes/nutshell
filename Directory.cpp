@@ -91,7 +91,7 @@ Command::Suggestions Cd::suggestions(const Line & /*line*/) const {
   return {};
 }
 
-Command::Status Cd::execute(const Line& line, Output& out) {
+Command::Status Cd::execute(const Line& line, Output& /*out*/) {
   const string command {line()};
   auto iter = command.begin();
   const auto& endIter = command.end();

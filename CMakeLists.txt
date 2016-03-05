@@ -8,12 +8,10 @@ add_definitions(
 -Wextra
 )
 
-set(CURSES_NEED_NCURSES TRUE)
-find_package(Curses REQUIRED QUIET)
-
 add_executable(nutshell
 Command.cpp
 Cursor.cpp
+Input.cpp
 Output.cpp
 Directory.cpp
 Executable.cpp
@@ -24,17 +22,14 @@ Path.cpp
 Pid.cpp
 Prompt.cpp
 Shell.cpp
-Terminal.cpp
 main.cpp
 )
 
 target_include_directories(nutshell
 PRIVATE
-${CURSES_INCLUDE_DIR}
 )
 
 target_link_libraries(nutshell
-${CURSES_LIBRARIES}
 stdc++fs
 )
 

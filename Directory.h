@@ -3,10 +3,10 @@
 
 #include "Command.h"
 #include "Line.h"
+#include "Output.h"
 
 #include <experimental/filesystem>
 
-class Output;
 
 class Cd: public Command {
   using path = std::experimental::filesystem::path;

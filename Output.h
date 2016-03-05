@@ -1,41 +1,36 @@
 #ifndef OUTPUT_H
 #define OUTPUT_H
 
+#include <iostream>
 #include <type_traits>
 #include <string>
 
-class Output {
-public:
-  Output();
-
-  unsigned get();
-  void refresh();
-};
-
 namespace manip {
 
-class color{
-  unsigned _pairId;
+enum EraseType: char { CursorToEnd, CursorToBegin, All};
+
+class erase{
+  EraseType _eraseType;
+
 public:
-  explicit color (unsigned pairId);
-  unsigned pairId() const;
+  explicit constexpr erase(EraseType eraseType) : _eraseType{eraseType} {}
+
+  friend std::ostream& operator<< (std::ostream& out, const erase& manip );
 };
 
-Output& reset(Output& curses);
+enum Color: char {Black, Red, Green, Yellow, Blue, Magenta, Cyan, White, Reset};
+
+struct color{
+  Color _color;
+
+public:
+  explicit color(Color color): _color{color} {}
+
+  friend std::ostream& operator<< (std::ostream& out, const color& manip );
+};
 
 }
 
-Output& operator << (Output& curses, const std::string& str);
-Output& operator << (Output& curses, char ch);
-
-template <typename Integer,
-          typename = std::enable_if_t<std::is_integral<Integer>::value>>
-Output& operator << (Output& curses, Integer integral){
-  return curses << std::to_string(integral);
-}
-
-Output& operator << (Output& curses, Output& (*pf)(Output &));
-
-Output& operator << (Output& curses, const manip::color& obj);
+using Output = std::ostream;
 
 #endif

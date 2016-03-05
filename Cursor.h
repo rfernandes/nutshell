@@ -13,6 +13,8 @@ public:
   void right(unsigned columns = 1);
   void position(Position position);
   Position position() const;
+
+  void column(unsigned column = 1);
 };
 
 #endif

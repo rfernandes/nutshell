@@ -2,13 +2,12 @@
 #define COMMAND_H
 
 #include "Line.h"
+#include "Output.h"
 
 #include <unordered_set>
 #include <unordered_map>
 #include <functional>
 #include <memory>
-
-class Output;
 
 class Command {
 public:
