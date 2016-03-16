@@ -4,9 +4,9 @@
 #include <io/Cursor.h>
 #include <io/Input.h>
 #include <io/Output.h>
-#include <shell/History.h>
 #include <shell/Path.h>
 #include <shell/Prompt.h>
+#include <shell/Line.h>
 
 class CommandStore;
 
@@ -20,7 +20,6 @@ private:
   CommandStore& _store;
   Prompt _prompt;
   Line _line;
-  History _history;
   Input _in;
   Output& _out;
   Cursor _cursor;

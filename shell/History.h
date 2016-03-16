@@ -1,21 +1,31 @@
-#ifndef HISTORY
-#define HISTORY
+#ifndef HISTORY_H
+#define HISTORY_H
 
+#include <command/Command.h>
 #include <shell/Line.h>
 
-class History
-{
+class History: public Command {
   std::vector<Line> _history;
-  std::size_t _idx;
+  std::vector<Line>::const_iterator _idx;
+
+  friend class Visitor;
 
 public:
-
   History();
 
-  void add(const Line& command);
-  const Line& forward();
-  const Line& backward();
-};
+  History(const History&) = delete;
+  ~History() override;
 
+  void add(const Line& command);
+  const Line& forward(const Line& current);
+  const Line& backward(const Line& current);
+
+  void clear();
+  const std::vector<Line>& list() const;
+
+  Command::Status execute(const Line& line, Output& out) override;
+  bool matches(const Line& line) const override;
+  Suggestions suggestions(const Line& line) const override;
+};
 
 #endif

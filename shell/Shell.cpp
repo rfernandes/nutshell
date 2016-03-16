@@ -1,6 +1,7 @@
 #include "Shell.h"
 
 #include <command/Command.h>
+#include <shell/History.h>
 
 using namespace std;
 using namespace manip;
@@ -58,6 +59,9 @@ Shell::Shell()
 }
 
 int Shell::run() {
+
+  auto& history = CommandStore::store<History>();
+
   unsigned keystroke;
   while (!_exit && (keystroke = _in.get())) {
     switch (keystroke) {
@@ -74,8 +78,10 @@ int Shell::run() {
         } catch (exception& ex) {
           _out << "Error " << ex.what() << "\n";
         }
-        _history.add(_line);
-        _line = Line{};
+        if (!_line.empty()) {
+          history.add(_line);
+          _line = Line{};
+        }
         _prompt();
         break;
       case '\t': { // Tab
@@ -92,10 +98,9 @@ int Shell::run() {
         break;
       }
       case Input::Backspace:
-      case '\b': { // Ctrl-H
+      case '\b': // Ctrl-H
         if (_line.empty()) break;
         _cursor.left();
-      }
       case Input::Delete:
         _line.pop();
         _out << erase(CursorToEnd);
@@ -110,10 +115,21 @@ int Shell::run() {
         break;
       case Input::Up:
       case Input::Down: {
-        _line = keystroke == Input::Down ? _history.forward() : _history.backward();
+        _line = keystroke == Input::Down ? history.forward(_line) : history.backward(_line);
         _cursor.column();
         _prompt();
-        _out << _line() << erase(CursorToEnd);
+        auto matched = _store.matches(_line);
+        if (matched){
+          _out << color(Green);
+        }
+        _out << _line.command();
+        if (matched){
+          _out << color(Reset);
+        }
+        if (_line.parameterCount()) {
+          _out << ' ' <<  _line.parameters();
+        }
+        _out << erase(CursorToEnd);
         break;
       }
       case Input::Home:
