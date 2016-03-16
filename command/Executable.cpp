@@ -25,20 +25,17 @@ Executable::Executable(const std::experimental::filesystem::path& path)
 {
 }
 
-bool Executable::matches(const Line& line) const
-{
+bool Executable::matches(const Line& line) const {
   return line.command() == _path.filename();
 }
 
-Command::Suggestions Executable::suggestions(const Line& line) const
-{
+Command::Suggestions Executable::suggestions(const Line& line) const {
   const auto& command = line.command();
   const auto& path = _path.filename().string();
   return path.compare(0, command.size(), command) == 0 ? Suggestions{path} : Suggestions{};
 }
 
-Command::Status Executable::execute(const Line& line, Output& out)
-{
+Command::Status Executable::execute(const Line& line, Output& out) {
   return matches(line) ? launch(line, out)
                        : Command::Status::NoMatch;
 }

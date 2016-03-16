@@ -29,7 +29,7 @@ namespace ast {
 
   using wait_function = uint64_t;
 
-  using cwd_function = string;
+  struct cwd_function{};
 
   using functions = boost::variant<kill_function, wait_function, cwd_function>;
 
@@ -46,25 +46,23 @@ namespace {
   namespace x3 = boost::spirit::x3;
 
   auto killFunction = x3::rule<class killFunction, ast::kill_function>()
-    = x3::lit("kill") >> -( x3::lit('(') >> x3::uint8 >> x3::lit(')') );
+    = x3::lit("kill") >>  ( '(' >> - x3::uint8 >> ')' );
 
   auto waitFunction = x3::rule<class waitFunction, ast::wait_function>()
-    = x3::lit("wait") >> x3::lit('(') >> x3::uint64 >> x3::lit(')');
+    = x3::lit("wait") >> '(' >> x3::uint64 >> ')';
 
-  // TODO: There is probably a cleaner approach to bind a type with a literal
-  //  that would remove the need for the cwd_function using declaration
   auto cwdFunction =  x3::rule<class cwdFunction, ast::cwd_function>()
-    = x3::string("cwd");
+    = "cwd" >> x3::attr(ast::cwd_function{});
 
   auto functions = x3::rule<class functions, ast::functions>()
     = killFunction | waitFunction | cwdFunction;
 
   auto pidName = x3::rule<class pidName, string>()
-    = x3::lit('"') >> x3::no_skip[+~x3::char_('"')] >> x3::lit('"') |
+    = '"' >> x3::no_skip[+~x3::char_('"')] >> '"' |
       +~x3::char_(' ');
 
   auto pidCommand = x3::rule<class pidCommand, ast::pid_command>()
-    = '^' >> - (x3::uint_ | pidName) >> - x3::no_skip[ x3::lit('.') >> functions ];
+    = '^' >> - (x3::uint_ | pidName) >> - x3::no_skip[ '.' >> functions ];
 
   struct PidVisitor {
     unsigned operator()(unsigned& i) const {

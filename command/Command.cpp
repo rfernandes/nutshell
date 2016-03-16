@@ -12,7 +12,9 @@ CommandStore& CommandStore::instance() {
 bool CommandStore::matches(const Line& line) const {
   return any_of(_commands.begin(),
                 _commands.end(),
-                [&](const auto &command){ return command->matches(line); });
+                [&](auto &command){
+                  return command->matches(line);
+                });
 }
 
 Command::Suggestions CommandStore::suggestions(const Line& line) const {
