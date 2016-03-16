@@ -13,6 +13,7 @@ command/Command.cpp
 command/Directory.cpp
 command/Executable.cpp
 command/Pid.cpp
+command/Variable.cpp
 io/Cursor.cpp
 io/Input.cpp
 io/Output.cpp
