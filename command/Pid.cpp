@@ -23,15 +23,17 @@ namespace {
 namespace ast {
   using Pid = boost::variant<unsigned, string>;
 
-  struct kill_function{
+  struct kill{
     boost::optional<uint8_t> signal;
   };
 
-  using wait_function = uint64_t;
+  struct wait{
+    uint64_t seconds;
+  };
 
-  struct cwd_function{};
+  struct cwd{};
 
-  using functions = boost::variant<kill_function, wait_function, cwd_function>;
+  using functions = boost::variant<kill, wait, cwd>;
 
   struct pid_command{
     boost::optional<Pid> pid;
@@ -40,26 +42,27 @@ namespace ast {
 }
 
 BOOST_FUSION_ADAPT_STRUCT(ast::pid_command, pid, function)
-BOOST_FUSION_ADAPT_STRUCT(ast::kill_function, signal)
+BOOST_FUSION_ADAPT_STRUCT(ast::kill, signal)
+BOOST_FUSION_ADAPT_STRUCT(ast::wait, seconds)
 
 namespace {
   namespace x3 = boost::spirit::x3;
 
-  auto killFunction = x3::rule<class killFunction, ast::kill_function>()
+  auto kill = x3::rule<class kill, ast::kill>()
     = x3::lit("kill") >>  ( '(' >> - x3::uint8 >> ')' );
 
-  auto waitFunction = x3::rule<class waitFunction, ast::wait_function>()
+  auto wait = x3::rule<class waitFunction, ast::wait>()
     = x3::lit("wait") >> '(' >> x3::uint64 >> ')';
 
-  auto cwdFunction =  x3::rule<class cwdFunction, ast::cwd_function>()
-    = "cwd" >> x3::attr(ast::cwd_function{});
+  auto cwd =  x3::rule<class cwd, ast::cwd>()
+    = "cwd" >> x3::attr(ast::cwd{});
 
   auto functions = x3::rule<class functions, ast::functions>()
-    = killFunction | waitFunction | cwdFunction;
+    = kill | wait | cwd;
 
   auto pidName = x3::rule<class pidName, string>()
     = '"' >> x3::no_skip[+~x3::char_('"')] >> '"' |
-      +~x3::char_(' ');
+      x3::alpha >> *x3::alnum;
 
   auto pidCommand = x3::rule<class pidCommand, ast::pid_command>()
     = '^' >> - (x3::uint_ | pidName) >> - x3::no_skip[ '.' >> functions ];
@@ -99,18 +102,18 @@ namespace {
     {
     }
 
-    void operator()(const ast::kill_function& function) const {
+    void operator()(const ast::kill& function) const {
       auto signal = function.signal.get_value_or(6);
-      kill(_pid, signal);
+      ::kill(_pid, signal);
       _out << "killed [" << signal << "]: " << _pid << "\n";
     }
 
-    void operator()(const ast::wait_function& /*function*/) const {
+    void operator()(const ast::wait& /*function*/) const {
       _out << "waiting : " << _pid << "\n";
-      wait(const_cast<unsigned*>(&_pid));
+      ::wait(const_cast<unsigned*>(&_pid));
     }
 
-    void operator()(const ast::cwd_function&) const {
+    void operator()(const ast::cwd&) const {
       path pidCwd{"/proc"};
       pidCwd /= to_string(_pid) / "cwd";
       // TODO: Read_symlink isn't working with /proc symlink ??
