@@ -71,9 +71,8 @@ Cd::Cd()
 }
 
 bool Cd::matches(const Line & line) const {
-  const string command {line()};
-  auto iter = command.begin();
-  const auto& end = command.end();
+  auto iter = line.begin();
+  const auto& end = line.end();
 
   return x3::phrase_parse(iter, end, cdRule, x3::space);
 }
@@ -83,9 +82,8 @@ Command::Suggestions Cd::suggestions(const Line & /*line*/) const {
 }
 
 Command::Status Cd::execute(const Line& line, Output& /*out*/) {
-  const string command {line()};
-  auto iter = command.begin();
-  const auto& endIter = command.end();
+  auto iter = line.begin();
+  const auto& endIter = line.end();
 
   ast::CdCommand data;
   bool ok {x3::phrase_parse(iter, endIter, cdRule, x3::space, data)};

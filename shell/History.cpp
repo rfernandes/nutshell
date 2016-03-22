@@ -50,7 +50,7 @@ class Visitor {
     void operator()(const ast::list&) const {
       auto &list = _history.list();
       for (size_t idx=0; idx< list.size(); ++idx){
-        _out << idx << ':' << list[idx]() << "\n";
+        _out << idx << ':' << list[idx] << "\n";
       }
     }
 
@@ -95,9 +95,8 @@ const std::vector<Line>& History::list() const {
 }
 
 Command::Status History::execute(const Line& line, Output& out) {
-  const string command {line()};
-  auto iter = command.begin();
-  auto endIter = command.end();
+  auto iter = line.begin();
+  auto endIter = line.end();
 
   ast::HistoryCommand data;
   const bool ok {x3::phrase_parse(iter, endIter, historyCommand, x3::space, data)};
@@ -113,13 +112,12 @@ Command::Status History::execute(const Line& line, Output& out) {
 }
 
 bool History::matches(const Line& line) const {
-  const string command {line()};
-  auto iter = command.begin();
-  auto endIter = command.end();
+  auto iter = line.begin();
+  auto endIter = line.end();
 
   const bool ok {x3::phrase_parse(iter, endIter, historyCommand, x3::space)};
 
-  return ok || static_cast<size_t>(distance(command.begin(), iter)) == command.size();
+  return ok || static_cast<size_t>(distance(line.begin(), iter)) == line.size();
 }
 
 

@@ -5,7 +5,7 @@ using namespace std;
 namespace {
   // Pipe to capture output
   Command::Status launch(const Line &line, Output& out) {
-    unique_ptr<FILE, decltype(&pclose)> pipe{popen((line.command() + " " + line.parameters()).data(), "r"), pclose};
+    unique_ptr<FILE, decltype(&pclose)> pipe{popen(line.data(), "r"), pclose};
     if (!pipe){
       throw std::runtime_error("Unable to fork/pipe");
     }
@@ -26,13 +26,12 @@ Executable::Executable(const std::experimental::filesystem::path& path)
 }
 
 bool Executable::matches(const Line& line) const {
-  return line.command() == _path.filename();
+  const auto& filename = _path.filename().string();
+  return filename == line.substr(0, line.find_first_of(' '));
 }
 
 Command::Suggestions Executable::suggestions(const Line& line) const {
-  const auto& command = line.command();
-  const auto& path = _path.filename().string();
-  return path.compare(0, command.size(), command) == 0 ? Suggestions{path} : Suggestions{};
+  return matches(line) ? Suggestions{_path} : Suggestions{};
 }
 
 Command::Status Executable::execute(const Line& line, Output& out) {

@@ -20,12 +20,11 @@ public:
   ~BuiltIn() override = default;
 
   bool matches(const Line& line) const override {
-    return line.command() == _command;
+    return line.substr(0, line.find_first_of(' ')) == _command;
   }
 
   Suggestions suggestions(const Line& line) const override {
-    const auto& command = line.command();
-    return _command.compare(0, command.size(), command) == 0 ? Suggestions{_command} : Suggestions{};
+    return _command.compare(0, line.find_first_of(' '), line) == 0 ? Suggestions{_command} : Suggestions{};
   }
 
   Command::Status execute(const Line& line, Output& out) override {
@@ -70,7 +69,7 @@ int Shell::run() {
         try{
           switch (_store.execute(_line, _out)) {
             case Command::Status::NoMatch:
-              _out << "Command not found [" << _line.command() << "]\n";
+              _out << "Command not found [" << _line.substr(0, _line.find_first_of(' ')) << "]\n";
               break;
             case Command::Status::Ok:
               break;
@@ -102,7 +101,7 @@ int Shell::run() {
         if (_line.empty()) break;
         _cursor.left();
       case Input::Delete:
-        _line.pop();
+        _line.pop_back();
         _out << erase(CursorToEnd);
         break;
       case Input::Left:
@@ -110,7 +109,7 @@ int Shell::run() {
           _cursor.left();
         break;
       case Input::Right:
-        if (_cursor.position().x < _prompt.width() + _line.width())
+        if (_cursor.position().x < _prompt.width() + _line.size())
           _cursor.right();
         break;
       case Input::Up:
@@ -122,12 +121,9 @@ int Shell::run() {
         if (matched){
           _out << color(Green);
         }
-        _out << _line.command();
+        _out << _line;
         if (matched){
           _out << color(Reset);
-        }
-        if (_line.parameterCount()) {
-          _out << ' ' <<  _line.parameters();
         }
         _out << erase(CursorToEnd);
         break;
@@ -135,7 +131,7 @@ int Shell::run() {
       case Input::Home:
       case Input::End: {
         auto column = keystroke == Input::Home ? _prompt.width()
-                                         : _prompt.width() + _line.width();
+                                               : _prompt.width() + _line.size();
         _cursor.column(column);
         break;
       }
@@ -148,19 +144,16 @@ int Shell::run() {
       case Input::Unknown: // Unknown special key received
         break; // ignore list
       default: {
-        _line.push(keystroke);
+        _line.push_back(keystroke);
         _cursor.column();
         _prompt();
         auto matched = _store.matches(_line);
         if (matched){
           _out << color(Green);
         }
-        _out << _line.command();
+        _out << _line;
         if (matched){
           _out << color(Reset);
-        }
-        if (_line.parameterCount()) {
-          _out << ' ' <<  _line.parameters();
         }
         break;
       }

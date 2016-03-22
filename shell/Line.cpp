@@ -5,7 +5,7 @@
 #include <sstream>
 
 using namespace std;
-
+/*
 Line::Line()
 : _segments(1)
 , _active{_segments.begin()}
@@ -81,4 +81,4 @@ unsigned int Line::width() const {
                     [](unsigned acc, const string& str){
                       return acc + str.size();
                     }) + _segments.size() - 1;
-}
+}*/

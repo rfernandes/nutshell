@@ -120,13 +120,12 @@ namespace {
 }
 
 bool Pid::matches(const Line & line) const {
-  const string command {line()};
-  auto iter = command.begin();
-  auto endIter = command.end();
+  auto iter = line.begin();
+  auto endIter = line.end();
 
   const bool ok {x3::phrase_parse(iter, endIter, pidCommand, x3::space)};
 
-  return ok || static_cast<size_t>(distance(command.begin(), iter)) == command.size();
+  return ok || static_cast<size_t>(distance(line.begin(), iter)) == line.size();
 }
 
 Command::Suggestions Pid::suggestions(const Line & /*line*/) const {
@@ -134,9 +133,8 @@ Command::Suggestions Pid::suggestions(const Line & /*line*/) const {
 }
 
 Command::Status Pid::execute(const Line & line, Output & output){
-  const string command {line()};
-  auto iter = command.begin();
-  auto endIter = command.end();
+  auto iter = line.begin();
+  auto endIter = line.end();
 
   ast::pid_command data;
   const bool ok {x3::phrase_parse(iter, endIter, pidCommand, x3::space, data)};
