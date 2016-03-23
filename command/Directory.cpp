@@ -9,10 +9,13 @@ using namespace std;
 using namespace std::experimental::filesystem;
 
 namespace ast {
-  using Pid = boost::variant<unsigned, string>;
+  struct previous{};
+  struct next{};
+
+  using functions = boost::variant<previous, next, string>;
 
   struct CdCommand{
-    boost::optional<boost::variant<char, string>> parameters;
+    boost::optional<functions> parameters;
   };
 }
 
@@ -21,9 +24,9 @@ BOOST_FUSION_ADAPT_STRUCT(ast::CdCommand, parameters)
 namespace {
   namespace x3 = boost::spirit::x3;
 
-  auto parameters = x3::rule<class parameters, boost::variant<char, string>>()
-    = x3::char_('-') |
-      x3::char_('+') |
+  auto parameters = x3::rule<class parameters, ast::functions>()
+    = '-' >> x3::attr(ast::previous{}) |
+      '+' >> x3::attr(ast::next{})  |
       *x3::char_;      // TODO: create path rule
 
   auto cdRule = x3::rule<class cdRule, ast::CdCommand>()
@@ -36,21 +39,17 @@ class CdVisitor {
 public:
   CdVisitor(Cd& cd): cd(cd){}
 
-  path operator()(char ch) const {
-    switch (ch){
-      default:
-        return {string{ch}};
-      case '-':
-        if (cd._idx > 0) {
-          --cd._idx;
-        };
-        break;
-      case '+':
-        if (cd._idx < cd._history.size() - 1) {
-          ++cd._idx;
-        };
-        break;
-    }
+  path operator()(const ast::previous&) const {
+    if (cd._idx > 0) {
+      --cd._idx;
+    };
+    return cd._history[cd._idx];
+  }
+
+  path operator()(const ast::next&) const {
+    if (cd._idx < cd._history.size() - 1) {
+      ++cd._idx;
+    };
     return cd._history[cd._idx];
   }
 
