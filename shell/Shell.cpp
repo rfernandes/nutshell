@@ -100,10 +100,23 @@ int Shell::run() {
       case '\b': // Ctrl-H
         if (_line.empty()) break;
         _cursor.left();
-      case Input::Delete:
-        _line.pop_back();
+      case Input::Delete: {
+        _line.erase(_cursor.position().x - _prompt.width(), 1);
         _out << erase(CursorToEnd);
+        auto push = _cursor.position().x;
+        _cursor.column();
+        _prompt();
+        auto matched = _store.matches(_line);
+        if (matched){
+          _out << color(Green);
+        }
+        _out << _line;
+        if (matched){
+          _out << color(Reset);
+        }
+        _cursor.column(push);
         break;
+      }
       case Input::Left:
         if (_cursor.position().x > _prompt.width())
           _cursor.left();
@@ -144,7 +157,8 @@ int Shell::run() {
       case Input::Unknown: // Unknown special key received
         break; // ignore list
       default: {
-        _line.push_back(keystroke);
+        _line.insert(_cursor.position().x - _prompt.width(), 1, keystroke);
+        auto push = _cursor.position().x + 1;
         _cursor.column();
         _prompt();
         auto matched = _store.matches(_line);
@@ -155,6 +169,7 @@ int Shell::run() {
         if (matched){
           _out << color(Reset);
         }
+        _cursor.column(push);
         break;
       }
     }
