@@ -5,7 +5,6 @@
 #include <io/Input.h>
 #include <io/Output.h>
 #include <shell/Path.h>
-#include <shell/Prompt.h>
 #include <shell/Line.h>
 
 class CommandStore;
@@ -17,14 +16,17 @@ public:
   int run();
 
 private:
+
+  void prompt();
+
   CommandStore& _store;
-  Prompt _prompt;
   Line _line;
   Input _in;
   Output& _out;
   Cursor _cursor;
   Path _path;
   bool _exit;
+  unsigned _column;
 };
 
 #endif

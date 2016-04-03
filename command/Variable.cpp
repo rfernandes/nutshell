@@ -133,6 +133,6 @@ Command::Suggestions Variable::suggestions(const Line& /*line*/) const
 }
 
 namespace {
-  auto registration = CommandStore::store<Variable>();
+  auto& registration = CommandStore::store<Variable>();
 }
 

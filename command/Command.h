@@ -27,8 +27,8 @@ class CommandStore {
 public:
 
   template<typename CommandT, typename ...Args>
-  static CommandT& store(Args ...args) {
-    const auto result = instance()._commands.insert(std::make_unique<CommandT>(args...));
+  static CommandT& store(Args&& ...args) {
+    const auto& result = instance()._commands.insert(std::make_unique<CommandT>(std::forward<Args>(args)...));
     return *static_cast<CommandT*>(result.first->get());
   }
 

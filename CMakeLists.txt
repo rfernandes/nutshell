@@ -13,15 +13,14 @@ command/Command.cpp
 command/Directory.cpp
 command/Executable.cpp
 command/Pid.cpp
+command/String.cpp
 command/Variable.cpp
 io/Cursor.cpp
 io/Input.cpp
 io/Output.cpp
 main.cpp
 shell/History.cpp
-shell/Line.cpp
 shell/Path.cpp
-shell/Prompt.cpp
 shell/Shell.cpp
 )
 

@@ -31,6 +31,9 @@ namespace {
 
   auto cdRule = x3::rule<class cdRule, ast::CdCommand>()
     = "cd" >> -parameters;
+
+  auto cwdRule = x3::rule<class cwd>()
+    = x3::lit("$.cwd");
 }
 
 class CdVisitor {
@@ -92,7 +95,8 @@ Command::Status Cd::execute(const Line& line, Output& /*out*/) {
   path target = data.parameters ? boost::apply_visitor(CdVisitor{*this}, data.parameters.get())
                                 : path{getpwuid(geteuid())->pw_dir};
 
-  canonical(target);
+  // FIXME: this also resolves symlinks, which we do not want
+  target = canonical(target);
 
   error_code error;
   current_path(target, error);
@@ -114,6 +118,36 @@ const path& Cd::cwd() const {
   return _current;
 }
 
+/// Helper class to expose cwd as an internal command
+class Cwd: public Command {
+  const Cd& _cd;
+
+public:
+  Cwd(const Cd& cd)
+  : _cd{cd}
+  {
+  }
+
+  Command::Status execute(const Line & line, Output & out) override {
+    auto iter = line.begin();
+    const auto& endIter = line.end();
+    bool ok {x3::phrase_parse(iter, endIter, cwdRule, x3::space)};
+    if (!ok) return Command::Status::NoMatch;
+    out << _cd.cwd().string();
+
+    return Command::Status::Ok;
+  }
+
+  bool matches(const Line & /*line*/) const override {
+    return false;
+  }
+
+  Suggestions suggestions(const Line & /*line*/) const override{
+    return Suggestions{};
+  }
+};
+
 namespace {
-  auto command = CommandStore::store<Cd>();
+  auto& cd = CommandStore::store<Cd>();
+  auto& cwd = CommandStore::store<Cwd>(cd);
 }

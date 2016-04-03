@@ -156,5 +156,5 @@ Command::Status Pid::execute(const Line & line, Output & output){
 }
 
 namespace {
-  auto pid = CommandStore::store<Pid>();
+  auto& pid = CommandStore::store<Pid>();
 }

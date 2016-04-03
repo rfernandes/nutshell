@@ -54,7 +54,18 @@ Shell::Shell()
                                  output << "No one can help you (for now)\n";
                                  return Command::Status::Ok;
                                });
-  _prompt();
+  prompt();
+}
+
+void Shell::prompt() {
+  stringstream ss;
+  // FIXME Extend this into a function concept // full parser
+  _store.execute("\"\x1b[38;2;120;150;230mNutshell\x1b[0m├─┤\x1b[38;2;120;150;230m\"", ss);
+  _store.execute("$.cwd", ss);
+  _store.execute("\"\x1b[0m│ \"", ss);
+  const string output = ss.str();
+  _out << output.substr(0, output.size());
+  _column = _cursor.position().x;
 }
 
 int Shell::run() {
@@ -81,7 +92,7 @@ int Shell::run() {
           history.add(_line);
           _line = Line{};
         }
-        _prompt();
+        prompt();
         break;
       case '\t': { // Tab
         const auto& suggestions = _store.suggestions(_line);
@@ -101,11 +112,11 @@ int Shell::run() {
         if (_line.empty()) break;
         _cursor.left();
       case Input::Delete: {
-        _line.erase(_cursor.position().x - _prompt.width(), 1);
+        _line.erase(_cursor.position().x - _column, 1);
         _out << erase(CursorToEnd);
         auto push = _cursor.position().x;
         _cursor.column();
-        _prompt();
+        prompt();
         auto matched = _store.matches(_line);
         if (matched){
           _out << color(Green);
@@ -118,18 +129,18 @@ int Shell::run() {
         break;
       }
       case Input::Left:
-        if (_cursor.position().x > _prompt.width())
+        if (_cursor.position().x > _column)
           _cursor.left();
         break;
       case Input::Right:
-        if (_cursor.position().x < _prompt.width() + _line.size())
+        if (_cursor.position().x < _column + _line.size())
           _cursor.right();
         break;
       case Input::Up:
       case Input::Down: {
         _line = keystroke == Input::Down ? history.forward(_line) : history.backward(_line);
         _cursor.column();
-        _prompt();
+        prompt();
         auto matched = _store.matches(_line);
         if (matched){
           _out << color(Green);
@@ -143,8 +154,8 @@ int Shell::run() {
       }
       case Input::Home:
       case Input::End: {
-        auto column = keystroke == Input::Home ? _prompt.width()
-                                               : _prompt.width() + _line.size();
+        auto column = keystroke == Input::Home ? _column
+                                               : _column + _line.size();
         _cursor.column(column);
         break;
       }
@@ -157,10 +168,10 @@ int Shell::run() {
       case Input::Unknown: // Unknown special key received
         break; // ignore list
       default: {
-        _line.insert(_cursor.position().x - _prompt.width(), 1, keystroke);
+        _line.insert(_cursor.position().x - _column, 1, keystroke);
         auto push = _cursor.position().x + 1;
         _cursor.column();
-        _prompt();
+        prompt();
         auto matched = _store.matches(_line);
         if (matched){
           _out << color(Green);
