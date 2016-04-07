@@ -27,13 +27,13 @@ namespace {
   auto parameters = x3::rule<class parameters, ast::functions>()
     = '-' >> x3::attr(ast::previous{}) |
       '+' >> x3::attr(ast::next{})  |
-      *x3::char_;      // TODO: create path rule
+      +x3::char_;      // TODO: create path rule
 
   auto cdRule = x3::rule<class cdRule, ast::CdCommand>()
     = "cd" >> -parameters;
 
   auto cwdRule = x3::rule<class cwd>()
-    = x3::lit("$.cwd");
+    = x3::lit(":cwd");
 }
 
 class CdVisitor {
@@ -67,6 +67,7 @@ public:
 
 Cd::Cd()
 : _current{current_path()}
+, _home{getpwuid(geteuid())->pw_dir}
 , _history(1, _current)
 , _idx{0}
 {
@@ -83,7 +84,7 @@ Command::Suggestions Cd::suggestions(const Line & /*line*/) const {
   return {};
 }
 
-Command::Status Cd::execute(const Line& line, Output& /*out*/) {
+Command::Status Cd::execute(const Line& line, Output& out) {
   auto iter = line.begin();
   const auto& endIter = line.end();
 
@@ -92,8 +93,8 @@ Command::Status Cd::execute(const Line& line, Output& /*out*/) {
 
   if (!ok) return Command::Status::NoMatch;
 
-  path target = data.parameters ? boost::apply_visitor(CdVisitor{*this}, data.parameters.get())
-                                : path{getpwuid(geteuid())->pw_dir};
+  path target {data.parameters ? boost::apply_visitor(CdVisitor{*this}, data.parameters.get())
+                               : _home};
 
   // FIXME: this also resolves symlinks, which we do not want
   target = canonical(target);
@@ -116,6 +117,10 @@ Command::Status Cd::execute(const Line& line, Output& /*out*/) {
 
 const path& Cd::cwd() const {
   return _current;
+}
+
+const path& Cd::home() const {
+  return _home;
 }
 
 /// Helper class to expose cwd as an internal command
