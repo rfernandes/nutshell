@@ -19,8 +19,26 @@ namespace {
       case 'D': return Input::Left;
       case 'H': return Input::Home;
       case 'F': return Input::End;
+      case '1': {
+        cin.get(); // Skip ;
+        switch (ch = cin.get()) {
+          case '5': {
+            switch (ch = cin.get()) {
+              case 'A': return Input::CtrlUp;
+              case 'B': return Input::CtrlDown;
+              case 'C': return Input::CtrlRight;
+              case 'D': return Input::CtrlLeft;
+              case 'H': return Input::CtrlHome;
+              case 'F': return Input::CtrlEnd;
+              default : cout << " >>" << +ch << "<<"; return Input::Unknown;
+            }
+          }
+          default:
+            return Input::Unknown;
+        }
+      }
       case '3': cin.get(); return Input::Delete; // Skip tilde
-      default : cout << " | " << ch << "|"; return Input::Unknown;
+      default : cout << " >>" << +ch << "<<"; return Input::Unknown;
     }
   }
 }

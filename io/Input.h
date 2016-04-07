@@ -8,12 +8,18 @@ public:
     Backspace = 127,
 
     Unknown = 257,
+    Up,
+    Down,
     Left,
     Right,
     Home,
     End,
-    Up,
-    Down,
+    CtrlUp,
+    CtrlDown,
+    CtrlLeft,
+    CtrlRight,
+    CtrlHome,
+    CtrlEnd,
     Delete
   };
 
