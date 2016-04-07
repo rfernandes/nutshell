@@ -5,43 +5,29 @@
 
 using namespace std;
 
-namespace ast {
-  struct sync{};
-  struct remove{};
-  struct assign{
-    string value;
-  };
-
-  class list{};
-
-  using functions = boost::variant<remove, sync, assign>;
-
-  struct String{
-    string name;
-    boost::optional<functions> function;
-  };
-
-  struct Strings{
-    boost::variant<list, String> command;
-  };
-}
-
-BOOST_FUSION_ADAPT_STRUCT(ast::String, name, function)
-BOOST_FUSION_ADAPT_STRUCT(ast::Strings, command)
-BOOST_FUSION_ADAPT_STRUCT(ast::assign, value)
-
 namespace {
   namespace x3 = boost::spirit::x3;
 
   const auto escape_code = [](auto &ctx) {
-    x3::_attr(ctx) = '\n';
+    char escape;
+    switch (x3::_attr(ctx)) {
+      case 'e': escape = '\x1b'; break;
+      case 't': escape = '\t'; break;
+      case 'n': escape = '\n'; break;
+      case 'r': escape = '\r'; break;
+      case 'v': escape = '\v'; break;
+      case 'a': escape = '\a'; break;
+      default:  break;                // Use original letter (escape was not required)
+    }
+    x3::_val(ctx) = escape;
   };
 
   const auto escape = x3::rule<class escape, char>()
    = '\\' >> x3::char_[escape_code];
 
   const auto command = x3::rule<class command, string>()
-    = '"' >> x3::no_skip[+ (escape | ~x3::char_('"'))] >> '"';
+    = ('"' >> x3::no_skip[ * (escape | ~x3::char_('"'))] >> '"') |
+      ('\'' >> x3::no_skip[ * (~x3::char_('\''))] >> '\'');
 }
 
 Command::Status String::execute(const Line& line, Output& out) {
