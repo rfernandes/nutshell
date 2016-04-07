@@ -12,10 +12,10 @@ using namespace std;
 namespace ast {
   class list{};
   class clear{};
+  class last{};
 
-  using functions = boost::variant<list, clear>;
-
-  using HistoryCommand = boost::optional<boost::variant<list, clear>>;
+  using functions = boost::variant <clear, list, last>;
+  using HistoryCommand = boost::variant <uint64_t, functions>;
 }
 
 namespace {
@@ -27,11 +27,15 @@ namespace {
   auto clear = x3::rule<class clear, ast::clear>()
     = x3::lit("clear") >> x3::attr(ast::clear{});
 
+  auto last = x3::rule<class last, ast::last>()
+    = x3::lit("last") >> x3::attr(ast::last{});
+
   auto functions = x3::rule<class functions, ast::functions>()
-    = clear | list ;
+    =  clear | list | last;
 
   auto historyCommand = x3::rule<class historyCommand, ast::HistoryCommand>()
-    = '!' >> - x3::no_skip[ '.' >> functions ];
+    = '!' >> ( x3::uint64 |
+               '.' >> functions);
 
   Line empty;
 }
@@ -47,15 +51,27 @@ class Visitor {
     {
     }
 
+    void operator()(const ast::functions& function) const {
+      return boost::apply_visitor(*this, function);
+    }
+
     void operator()(const ast::list&) const {
       auto &list = _history.list();
       for (size_t idx=0; idx< list.size(); ++idx){
-        _out << idx << ':' << list[idx] << "\n";
+        _out << idx << ' ' << list[idx] << "\n";
       }
     }
 
     void operator()(const ast::clear&) const {
       _history.clear();
+    }
+
+    void operator()(const ast::last&) const {
+      _out << "Unimplemented - Execute last command\n";
+    }
+
+    void operator()(uint64_t &idx) const {
+      _out << "Unimplemented - Execute command idx" << idx << "\n";
     }
 };
 
@@ -103,11 +119,8 @@ Command::Status History::execute(const Line& line, Output& out) {
 
   if (!ok || iter != endIter) return Command::Status::NoMatch;
 
-  if (data){
-    boost::apply_visitor(Visitor{*this, out}, data.get());
-  } else {
-    out << "Execute last command" << "\n";
-  }
+  boost::apply_visitor(Visitor{*this, out}, data);
+
   return Command::Status::Ok;
 }
 
@@ -121,6 +134,6 @@ bool History::matches(const Line& line) const {
 }
 
 
-Command::Suggestions History::suggestions(const Line& line) const {
+Command::Suggestions History::suggestions(const Line& /*line*/) const {
   return {};
 }
