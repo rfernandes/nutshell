@@ -36,13 +36,13 @@ namespace {
   namespace x3 = boost::spirit::x3;
 
   auto sync = x3::rule<class sync, ast::sync>()
-    = ".sync" >> x3::attr(ast::sync{}) >> '(' >> ')';
+    = ".sync" >> x3::attr(ast::sync{});
 
   auto remove = x3::rule<class remove, ast::remove>()
-    = ".remove" >> x3::attr(ast::remove{}) >> '(' >> ')';
+    = ".remove" >> x3::attr(ast::remove{});
 
   auto list = x3::rule<class list, ast::list>()
-    = ".list" >> x3::attr(ast::list{}) >> '(' >> ')';
+    = ".list" >> x3::attr(ast::list{});
 
   auto variableValue = x3::rule<class variableValue, string>()
     = '"' >> x3::no_skip[+~x3::char_('"')] >> '"' |
@@ -80,7 +80,6 @@ class VariableVisitor {
     }
 
     void operator()(const ast::remove&) const {
-      _out << "Removing variable\n";
       _variable._variables.erase(_name);
     }
 
@@ -124,7 +123,7 @@ bool Variable::matches(const Line& line) const {
 
   const bool ok {x3::phrase_parse(iter, endIter, command, x3::space)};
 
-  return ok || static_cast<size_t>(distance(line.begin(), iter)) == line.size();
+  return ok || (line.begin() != iter);
 }
 
 Command::Suggestions Variable::suggestions(const Line& /*line*/) const
