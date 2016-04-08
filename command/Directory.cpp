@@ -31,9 +31,6 @@ namespace {
 
   auto cdRule = x3::rule<class cdRule, ast::CdCommand>()
     = "cd" >> -parameters;
-
-  auto cwdRule = x3::rule<class cwd>()
-    = x3::lit(":cwd");
 }
 
 class CdVisitor {
@@ -84,7 +81,7 @@ Command::Suggestions Cd::suggestions(const Line & /*line*/) const {
   return {};
 }
 
-Command::Status Cd::execute(const Line& line, Output& out) {
+Command::Status Cd::execute(const Line& line, Output& /*out*/) {
   auto iter = line.begin();
   const auto& endIter = line.end();
 
@@ -123,36 +120,3 @@ const path& Cd::home() const {
   return _home;
 }
 
-/// Helper class to expose cwd as an internal command
-class Cwd: public Command {
-  const Cd& _cd;
-
-public:
-  Cwd(const Cd& cd)
-  : _cd{cd}
-  {
-  }
-
-  Command::Status execute(const Line & line, Output & out) override {
-    auto iter = line.begin();
-    const auto& endIter = line.end();
-    bool ok {x3::phrase_parse(iter, endIter, cwdRule, x3::space)};
-    if (!ok) return Command::Status::NoMatch;
-    out << _cd.cwd().string();
-
-    return Command::Status::Ok;
-  }
-
-  bool matches(const Line & /*line*/) const override {
-    return false;
-  }
-
-  Suggestions suggestions(const Line & /*line*/) const override{
-    return Suggestions{};
-  }
-};
-
-namespace {
-  auto& cd = CommandStore::store<Cd>();
-  auto& cwd = CommandStore::store<Cwd>(cd);
-}

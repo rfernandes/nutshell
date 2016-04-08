@@ -3,6 +3,8 @@
 #include <command/Command.h>
 #include <shell/History.h>
 
+#include <fstream>
+
 using namespace std;
 using namespace manip;
 
@@ -39,36 +41,70 @@ private:
 Shell::Shell()
 : _store(CommandStore::instance())
 , _out{cout}
+, _cd{CommandStore::store<Cd>()}
 , _exit{false}
 {
   setlocale(LC_ALL, "");
 
-  CommandStore::store<BuiltIn>("exit",
+  _prompt = "\"\x1b[38;2;230;120;150mNutshell\x1b[0m├─┤\x1b[38;2;120;150;230m\"\n"
+    ":cwd\n"
+    "\"\x1b[0m│ \"";
+
+  CommandStore::store<BuiltIn>(":exit",
                                [&](const Line& /*line*/, Output& /*output*/){
                                  _exit = true;
                                  return Command::Status::Ok;
                                });
 
-  CommandStore::store<BuiltIn>("help",
+  CommandStore::store<BuiltIn>(":help",
                                [](const Line& /*line*/, Output& output){
                                  output << "No one can help you (for now)\n";
                                  return Command::Status::Ok;
                                });
-  prompt();
+
+  CommandStore::store<BuiltIn>(":cwd",
+                               [&](const Line& /*line*/, Output& output){
+                                 output << _cd.cwd().string();
+                                 return Command::Status::Ok;
+                               });
+
+  // Comments are a simple no-op
+  CommandStore::store<BuiltIn>("#",
+                               [](const Line& /*line*/, Output& /*output*/){
+                                 return Command::Status::Ok;
+                               });
+
+  // Source ~/nutshellrc
+  ifstream config{_cd.home() / ".nutshellrc"};
+  if (config) {
+    string command;
+    while (getline(config, command)) {
+      _store.execute(command, _out);
+    }
+  }
 }
 
 void Shell::prompt() {
-  stringstream ss;
   // FIXME Extend this into a function concept // full parser
-  _store.execute("\"\x1b[38;2;120;150;230mNutshell\x1b[0m├─┤\x1b[38;2;120;150;230m\"", ss);
-  _store.execute("$.cwd", ss);
-  _store.execute("\"\x1b[0m│ \"", ss);
-  const string output = ss.str();
-  _out << output.substr(0, output.size());
+  stringstream prompt(_prompt);
+  string command;
+  stringstream output;
+  while (getline(prompt, command)) {
+    _store.execute(command, output);
+  }
+  _out << output.str();
   _column = _cursor.position().x;
 }
 
+void Shell::debug(unsigned ch, Cursor::Position position = Cursor::Position{1,1}) {
+  auto startPosition = _cursor.position();
+  _cursor.position(position);
+  _out << color(Yellow) << ch << color(Reset) << ' ';
+  _cursor.position(startPosition);
+}
+
 int Shell::run() {
+  prompt();
 
   auto& history = CommandStore::store<History>();
 
@@ -115,8 +151,7 @@ int Shell::run() {
         _line.erase(_cursor.position().x - _column, 1);
         _out << erase(CursorToEnd);
         auto push = _cursor.position().x;
-        _cursor.column();
-        prompt();
+        _cursor.column(_column);
         auto matched = _store.matches(_line);
         if (matched){
           _out << color(Green);
@@ -139,8 +174,7 @@ int Shell::run() {
       case Input::Up:
       case Input::Down: {
         _line = keystroke == Input::Down ? history.forward(_line) : history.backward(_line);
-        _cursor.column();
-        prompt();
+        _cursor.column(_column);
         auto matched = _store.matches(_line);
         if (matched){
           _out << color(Green);
@@ -168,10 +202,16 @@ int Shell::run() {
       case Input::Unknown: // Unknown special key received
         break; // ignore list
       default: {
+
+        if (keystroke > 0xff)
+        {
+          _out << "■";
+          continue;
+        }
+
         _line.insert(_cursor.position().x - _column, 1, keystroke);
         auto push = _cursor.position().x + 1;
-        _cursor.column();
-        prompt();
+        _cursor.column(_column);
         auto matched = _store.matches(_line);
         if (matched){
           _out << color(Green);
