@@ -5,26 +5,19 @@
 
 namespace manip {
 
-enum EraseType: char { CursorToEnd, CursorToBegin, All};
+enum class Erase: uint8_t { CursorToEnd, CursorToBegin, All};
+std::ostream& operator<< (std::ostream& out, Erase eraseType);
 
-class erase{
-  EraseType _eraseType;
+enum class Color: uint8_t {Black, Red, Green, Yellow, Blue, Magenta, Cyan, White, Reset};
+std::ostream& operator<< (std::ostream& out, Color color);
 
-public:
-  explicit constexpr erase(EraseType eraseType) : _eraseType{eraseType} {}
-
-  friend std::ostream& operator<< (std::ostream& out, const erase& manip );
-};
-
-enum Color: char {Black, Red, Green, Yellow, Blue, Magenta, Cyan, White, Reset};
-
-struct color{
-  Color _color;
+class rgb{
+  uint8_t _red,_green,_blue;
 
 public:
-  explicit color(Color color): _color{color} {}
+  rgb(uint8_t red, uint8_t green, uint8_t blue);
 
-  friend std::ostream& operator<< (std::ostream& out, const color& manip );
+  friend std::ostream& operator<< (std::ostream& out, const rgb& manip);
 };
 
 }

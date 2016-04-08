@@ -99,7 +99,7 @@ void Shell::prompt() {
 void Shell::debug(unsigned ch, Cursor::Position position = Cursor::Position{1,1}) {
   auto startPosition = _cursor.position();
   _cursor.position(position);
-  _out << color(Yellow) << ch << color(Reset) << ' ';
+  _out << Color::Yellow << ch << Color::Reset << ' ';
   _cursor.position(startPosition);
 }
 
@@ -149,16 +149,16 @@ int Shell::run() {
         _cursor.left();
       case Input::Delete: {
         _line.erase(_cursor.position().x - _column, 1);
-        _out << erase(CursorToEnd);
+        _out << Erase::CursorToEnd;
         auto push = _cursor.position().x;
         _cursor.column(_column);
         auto matched = _store.matches(_line);
         if (matched){
-          _out << color(Green);
+          _out << Color::Green;
         }
         _out << _line;
         if (matched){
-          _out << color(Reset);
+          _out << Color::Reset;
         }
         _cursor.column(push);
         break;
@@ -177,13 +177,13 @@ int Shell::run() {
         _cursor.column(_column);
         auto matched = _store.matches(_line);
         if (matched){
-          _out << color(Green);
+          _out << Color::Green;
         }
         _out << _line;
         if (matched){
-          _out << color(Reset);
+          _out << Color::Reset;
         }
-        _out << erase(CursorToEnd);
+        _out << Erase::CursorToEnd;
         break;
       }
       case Input::Home:
@@ -214,11 +214,11 @@ int Shell::run() {
         _cursor.column(_column);
         auto matched = _store.matches(_line);
         if (matched){
-          _out << color(Green);
+          _out << Color::Green;
         }
         _out << _line;
         if (matched){
-          _out << color(Reset);
+          _out << Color::Reset;
         }
         _cursor.column(push);
         break;
