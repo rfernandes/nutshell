@@ -16,6 +16,7 @@ public:
   enum class Status {
     NoMatch,
     Ok,
+    Incomplete,       // Command requires additional input
   };
 
   virtual Status execute(const Line& line, Output& out) = 0;

@@ -118,6 +118,8 @@ void Shell::debug(unsigned ch, Cursor::Position position = Cursor::Position{1,1}
 int Shell::run() {
   prompt();
 
+  Line buffer;
+
   auto& history = CommandStore::store<History>();
 
   unsigned keystroke;
@@ -125,20 +127,30 @@ int Shell::run() {
     switch (keystroke) {
       case '\n':
         _out << '\n';
-        try{
-          switch (_store.execute(_line, _out)) {
-            case Command::Status::NoMatch:
-              _out << "Command not found [" << _line.substr(0, _line.find_first_of(' ')) << "]\n";
-              break;
-            case Command::Status::Ok:
-              break;
+
+        buffer += _line;
+
+        if (!buffer.empty()) {
+          try{
+            switch (_store.execute(buffer, _out)) {
+              case Command::Status::Ok:
+                break;
+              case Command::Status::NoMatch:
+                _out << "Command not found [" << _line.substr(0, _line.find_first_of(' ')) << "]\n";
+                break;
+              case Command::Status::Incomplete:
+                _out << "In: ";
+                _column = _cursor.position().x;
+                buffer += "\n";
+                _line = Line{};
+                continue;
+            }
+          } catch (exception& ex) {
+            _out << "Error " << ex.what() << "\n";
           }
-        } catch (exception& ex) {
-          _out << "Error " << ex.what() << "\n";
-        }
-        if (!_line.empty()) {
-          history.add(_line);
-          _line.clear();
+          history.add(buffer);
+          buffer.clear();
+          _line = Line{};
         }
         prompt();
         break;
