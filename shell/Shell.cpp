@@ -84,6 +84,18 @@ Shell::Shell()
   }
 }
 
+void Shell::line() {
+  _cursor.column(_column);
+  auto matched = _store.matches(_line);
+  if (matched){
+    _out << Color::Green;
+  }
+  _out << _line;
+  if (matched){
+    _out << Color::Reset;
+  }
+}
+
 void Shell::prompt() {
   // FIXME Extend this into a function concept // full parser
   stringstream prompt(_prompt);
@@ -134,7 +146,7 @@ int Shell::run() {
         const auto& suggestions = _store.suggestions(_line);
         if (!suggestions.empty()) {
           if (suggestions.size() == 1) {
-            _line = {suggestions.at(0)};
+            _line = suggestions.at(0);
           }
           for (auto& suggestion: suggestions) {
             _out << " " << suggestion;
@@ -145,21 +157,15 @@ int Shell::run() {
       }
       case Input::Backspace:
       case '\b': // Ctrl-H
-        if (_line.empty()) break;
-        _cursor.left();
+        if (!_line.empty() && _column != _cursor.position().x){
+          _cursor.left();
+        }
+        break;
       case Input::Delete: {
         _line.erase(_cursor.position().x - _column, 1);
-        _out << Erase::CursorToEnd;
         auto push = _cursor.position().x;
-        _cursor.column(_column);
-        auto matched = _store.matches(_line);
-        if (matched){
-          _out << Color::Green;
-        }
-        _out << _line;
-        if (matched){
-          _out << Color::Reset;
-        }
+        line();
+        _out << Erase::CursorToEnd;
         _cursor.column(push);
         break;
       }
@@ -174,28 +180,38 @@ int Shell::run() {
       case Input::Up:
       case Input::Down: {
         _line = keystroke == Input::Down ? history.forward(_line) : history.backward(_line);
-        _cursor.column(_column);
-        auto matched = _store.matches(_line);
-        if (matched){
-          _out << Color::Green;
-        }
-        _out << _line;
-        if (matched){
-          _out << Color::Reset;
-        }
+        line();
         _out << Erase::CursorToEnd;
         break;
       }
       case Input::Home:
-      case Input::End: {
-        auto column = keystroke == Input::Home ? _column
-                                               : _column + _line.size();
-        _cursor.column(column);
+      case Input::End:
+        _cursor.column(keystroke == Input::Home ? _column: _column + _line.size());
         break;
-      }
       case 18: //Ctrl-R
         _out << "History interactive mode unimplemented\n";
         break;
+      case 23:{ //Ctrl-W
+        auto pos = _cursor.position().x - _column;
+        if (pos > 0){
+          --pos;
+        } else {
+          break;
+        }
+        auto start = _line.find_last_not_of(" ", pos);
+        auto idx = _line.find_last_of(" .", start);
+        if (idx == string::npos){
+          idx = 0;
+        } else {
+          ++idx;
+        }
+
+        _line.erase(idx, pos + 1 - idx);
+        line();
+        _out << Erase::CursorToEnd;
+        _cursor.column(_column + idx);
+        break;
+      }
       case 4: //Ctrl-D
         _exit = true;
         break;
@@ -203,23 +219,14 @@ int Shell::run() {
         break; // ignore list
       default: {
 
-        if (keystroke > 0xff)
-        {
+        if (keystroke > 0xff) {
           _out << "■";
           continue;
         }
 
         _line.insert(_cursor.position().x - _column, 1, keystroke);
         auto push = _cursor.position().x + 1;
-        _cursor.column(_column);
-        auto matched = _store.matches(_line);
-        if (matched){
-          _out << Color::Green;
-        }
-        _out << _line;
-        if (matched){
-          _out << Color::Reset;
-        }
+        line();
         _cursor.column(push);
         break;
       }

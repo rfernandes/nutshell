@@ -15,6 +15,7 @@ public:
   Shell();
 
   int run();
+  void line();
   void debug(unsigned ch, Cursor::Position pos);
 
 private:
