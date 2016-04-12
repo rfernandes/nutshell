@@ -138,7 +138,7 @@ int Shell::run() {
         }
         if (!_line.empty()) {
           history.add(_line);
-          _line = Line{};
+          _line.clear();
         }
         prompt();
         break;
@@ -157,10 +157,10 @@ int Shell::run() {
       }
       case Input::Backspace:
       case '\b': // Ctrl-H
-        if (!_line.empty() && _column != _cursor.position().x){
-          _cursor.left();
+        if (_line.empty() || _column == _cursor.position().x){
+          break;
         }
-        break;
+        _cursor.left();
       case Input::Delete: {
         _line.erase(_cursor.position().x - _column, 1);
         auto push = _cursor.position().x;
@@ -199,7 +199,7 @@ int Shell::run() {
           break;
         }
         auto start = _line.find_last_not_of(" ", pos);
-        auto idx = _line.find_last_of(" .", start);
+        auto idx = _line.find_last_of(" ", start);
         if (idx == string::npos){
           idx = 0;
         } else {
