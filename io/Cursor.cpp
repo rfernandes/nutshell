@@ -24,6 +24,14 @@ void Cursor::position(Cursor::Position position) {
   cout << "\x1b[" << position.y << ';' << position.x  << 'H';
 }
 
+Cursor::Position Cursor::max() {
+  auto start = this->position();
+  this->position({999,999});
+  auto maxPosition = this->position();
+  this->position(start);
+  return maxPosition;
+}
+
 Cursor::Position Cursor::position() const {
   cout << "\x1b[6n";
   cin.get(); // ^

@@ -2,6 +2,7 @@
 #define SHELL_H
 
 #include <command/Directory.h>
+#include <command/Function.h>
 #include <io/Cursor.h>
 #include <io/Input.h>
 #include <io/Output.h>
@@ -31,7 +32,7 @@ private:
   Cursor _cursor;
   Path _path;
   Cd &_cd;
-  std::string _prompt;
+  Function &_function;
   bool _exit;
   unsigned _column;
 };

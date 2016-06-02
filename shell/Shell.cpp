@@ -42,13 +42,20 @@ Shell::Shell()
 : _store(CommandStore::instance())
 , _out{cout}
 , _cd{CommandStore::store<Cd>()}
+, _function{
+    CommandStore::store<Function>(std::unordered_map<string, string>{
+    { ":prompt",
+      "\"\x1b[38;2;230;120;150mNutshell\x1b[0m├─┤\x1b[38;2;120;150;230m\"\n"
+      ":cwd\n"
+      "\"\x1b[0m│ \""},
+    { ":prompt2",
+      "date"},
+    { ":prompt_feed",
+      "\"feed: \""}
+    })}
 , _exit{false}
 {
   setlocale(LC_ALL, "");
-
-  _prompt = "\"\x1b[38;2;230;120;150mNutshell\x1b[0m├─┤\x1b[38;2;120;150;230m\"\n"
-    ":cwd\n"
-    "\"\x1b[0m│ \"";
 
   CommandStore::store<BuiltIn>(":exit",
                                [&](const Line& /*line*/, Output& /*output*/){
@@ -97,14 +104,8 @@ void Shell::line() {
 }
 
 void Shell::prompt() {
-  // FIXME Extend this into a function concept // full parser
-  stringstream prompt(_prompt);
-  string command;
-  stringstream output;
-  while (getline(prompt, command)) {
-    _store.execute(command, output);
-  }
-  _out << output.str();
+  // call Function "directly", instead of going through store
+  _function.execute(":prompt", _out);
   _column = _cursor.position().x;
 }
 
@@ -139,7 +140,7 @@ int Shell::run() {
                 _out << "Command not found [" << _line.substr(0, _line.find_first_of(' ')) << "]\n";
                 break;
               case Command::Status::Incomplete:
-                _out << "In: ";
+                _function.execute(":prompt_feed", _out);
                 _column = _cursor.position().x;
                 buffer += "\n";
                 _line = Line{};

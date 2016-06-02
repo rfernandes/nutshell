@@ -42,6 +42,7 @@ private:
   Command::Status execute(const Line& line, Output& output);
 
   friend class Shell;
+  friend class Function;
 };
 
 #endif
