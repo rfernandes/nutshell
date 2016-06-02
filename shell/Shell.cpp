@@ -42,13 +42,20 @@ Shell::Shell()
 : _store(CommandStore::instance())
 , _out{cout}
 , _cd{CommandStore::store<Cd>()}
+, _function{
+    CommandStore::store<Function>(std::unordered_map<string, string>{
+    { ":prompt",
+      "\"\x1b[38;2;230;120;150mNutshell\x1b[0m├─┤\x1b[38;2;120;150;230m\"\n"
+      ":cwd\n"
+      "\"\x1b[0m│ \""},
+    { ":prompt2",
+      "date"},
+    { ":prompt_feed",
+      "\"feed: \""}
+    })}
 , _exit{false}
 {
   setlocale(LC_ALL, "");
-
-  _prompt = "\"\x1b[38;2;230;120;150mNutshell\x1b[0m├─┤\x1b[38;2;120;150;230m\"\n"
-    ":cwd\n"
-    "\"\x1b[0m│ \"";
 
   CommandStore::store<BuiltIn>(":exit",
                                [&](const Line& /*line*/, Output& /*output*/){
@@ -97,14 +104,8 @@ void Shell::line() {
 }
 
 void Shell::prompt() {
-  // FIXME Extend this into a function concept // full parser
-  stringstream prompt(_prompt);
-  string command;
-  stringstream output;
-  while (getline(prompt, command)) {
-    _store.execute(command, output);
-  }
-  _out << output.str();
+  // call Function "directly", instead of going through store
+  _function.execute(":prompt", _out);
   _column = _cursor.position().x;
 }
 
@@ -118,6 +119,8 @@ void Shell::debug(unsigned ch, Cursor::Position position = Cursor::Position{1,1}
 int Shell::run() {
   prompt();
 
+  Line buffer;
+
   auto& history = CommandStore::store<History>();
 
   unsigned keystroke;
@@ -125,20 +128,30 @@ int Shell::run() {
     switch (keystroke) {
       case '\n':
         _out << '\n';
-        try{
-          switch (_store.execute(_line, _out)) {
-            case Command::Status::NoMatch:
-              _out << "Command not found [" << _line.substr(0, _line.find_first_of(' ')) << "]\n";
-              break;
-            case Command::Status::Ok:
-              break;
+
+        buffer += _line;
+
+        if (!buffer.empty()) {
+          try{
+            switch (_store.execute(buffer, _out)) {
+              case Command::Status::Ok:
+                break;
+              case Command::Status::NoMatch:
+                _out << "Command not found [" << _line.substr(0, _line.find_first_of(' ')) << "]\n";
+                break;
+              case Command::Status::Incomplete:
+                _function.execute(":prompt_feed", _out);
+                _column = _cursor.position().x;
+                buffer += "\n";
+                _line = Line{};
+                continue;
+            }
+          } catch (exception& ex) {
+            _out << "Error " << ex.what() << "\n";
           }
-        } catch (exception& ex) {
-          _out << "Error " << ex.what() << "\n";
-        }
-        if (!_line.empty()) {
-          history.add(_line);
-          _line.clear();
+          history.add(buffer);
+          buffer.clear();
+          _line = Line{};
         }
         prompt();
         break;

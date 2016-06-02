@@ -16,6 +16,7 @@ public:
   enum class Status {
     NoMatch,
     Ok,
+    Incomplete,       // Command requires additional input
   };
 
   virtual Status execute(const Line& line, Output& out) = 0;
@@ -41,6 +42,7 @@ private:
   Command::Status execute(const Line& line, Output& output);
 
   friend class Shell;
+  friend class Function;
 };
 
 #endif

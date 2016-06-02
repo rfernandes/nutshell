@@ -12,6 +12,7 @@ public:
   void left(unsigned columns = 1);
   void right(unsigned columns = 1);
   void position(Position position);
+  Position max();
   Position position() const;
 
   void column(unsigned column = 1);
