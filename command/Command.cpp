@@ -4,35 +4,24 @@
 
 using namespace std;
 
+std::experimental::string_view slice(const std::string& str, size_t start, size_t length)
+{
+  return {str.c_str() + start, length};
+}
+
 CommandStore& CommandStore::instance() {
   static CommandStore instance;
   return instance;
 }
 
-bool CommandStore::matches(const Line& line) const {
-  return any_of(_commands.begin(),
-                _commands.end(),
-                [&](auto &command){
-                  return command->matches(line);
-                });
-}
-
-Command::Suggestions CommandStore::suggestions(const Line& line) const {
-  Command::Suggestions ret;
-  for (auto &command: _commands){
-    const auto commandSuggestions = command->suggestions(line);
-    ret.insert(ret.begin(), commandSuggestions.begin(), commandSuggestions.end());
-  }
-  return ret;
-}
-
-Command::Status CommandStore::execute(const Line& line, Output& out) {
-  Command::Status ret {Command::Status::NoMatch};
-  for (auto &command: _commands) {
-    ret = command->execute(line, out);
-    if (ret != Command::Status::NoMatch) {
+Description CommandStore::parse(const Line& line, Output& output, bool execute) {
+  Description desc;
+  for (const auto& command: _commands) {
+    desc = command->parse(line, output, execute);
+    if (desc.status != Status::NoMatch){
       break;
     }
   }
-  return ret;
+  return desc;
 }
+

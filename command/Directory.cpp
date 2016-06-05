@@ -1,5 +1,7 @@
 #include "Directory.h"
 
+#include <command/Parser.h>
+
 #include <boost/spirit/home/x3.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
 
@@ -8,11 +10,18 @@
 using namespace std;
 using namespace std::experimental::filesystem;
 
+namespace x3 = boost::spirit::x3;
+
 namespace ast {
+  using path = std::string;
+
   struct previous{};
   struct next{};
 
-  using functions = boost::variant<previous, next, string>;
+  struct functions: x3::variant<previous, next, string>{
+    using base_type::base_type;
+    using base_type::operator=;
+  };
 
   struct CdCommand{
     boost::optional<functions> parameters;
@@ -22,15 +31,42 @@ namespace ast {
 BOOST_FUSION_ADAPT_STRUCT(ast::CdCommand, parameters)
 
 namespace {
-  namespace x3 = boost::spirit::x3;
+  struct previous_class: parser::type_annotation<Segment::Type::Function>{};
+  struct next_class: parser::type_annotation<Segment::Type::Function>{};
+  struct path_class: parser::type_annotation<Segment::Type::Parameter> {};
+  struct functions_class{};
+  struct commandName_class: parser::type_annotation<Segment::Type::Builtin>{};
+  struct command_class{};
 
-  auto parameters = x3::rule<class parameters, ast::functions>()
-    = '-' >> x3::attr(ast::previous{}) |
-      '+' >> x3::attr(ast::next{})  |
-      +x3::char_;      // TODO: create path rule
+  using previous_type = x3::rule<previous_class, ast::previous>;
+  using next_type = x3::rule<next_class, ast::next>;
+  using path_type = x3::rule<path_class, ast::path>;
+  using functions_type = x3::rule<functions_class, ast::functions>;
+  using commandName_type = x3::rule<commandName_class>;
+  using command_type = x3::rule<command_class, ast::CdCommand>;
 
-  auto cdRule = x3::rule<class cdRule, ast::CdCommand>()
-    = "cd" >> -parameters;
+  const previous_type previous = "previous";
+  const next_type next = "next";
+  const path_type pathParam = "path";
+  const functions_type functions = "functions";
+  const commandName_type commandName = "commandName";
+  const command_type command = "command";
+
+  auto previous_def = '-' >> x3::attr(ast::previous{});
+  auto next_def = "+" >> x3::attr(ast::next{});
+  auto pathParam_def = +x3::char_;
+  auto functions_def = previous | next | pathParam;
+  auto commandName_def = "cd";
+  auto command_def = commandName >> -functions;
+
+  BOOST_SPIRIT_DEFINE(
+    previous,
+    next,
+    pathParam,
+    functions,
+    commandName,
+    command
+  )
 }
 
 class CdVisitor {
@@ -70,46 +106,44 @@ Cd::Cd()
 {
 }
 
-bool Cd::matches(const Line & line) const {
-  auto iter = line.begin();
-  const auto& end = line.end();
-
-  return x3::phrase_parse(iter, end, cdRule, x3::space);
-}
-
-Command::Suggestions Cd::suggestions(const Line & /*line*/) const {
-  return {};
-}
-
-Command::Status Cd::execute(const Line& line, Output& /*out*/) {
+Description Cd::parse(const Line& line, Output& /*output*/, bool execute){
   auto iter = line.begin();
   const auto& endIter = line.end();
 
+
+  Description desc;
+  const auto parser = x3::with<Description>(ref(desc))[
+                        x3::with<Line>(ref(line))[command]];
+
   ast::CdCommand data;
-  bool ok {x3::phrase_parse(iter, endIter, cdRule, x3::space, data)};
+  bool ok {x3::phrase_parse(iter, endIter, parser, x3::space, data)};
 
-  if (!ok) return Command::Status::NoMatch;
+  if (!ok) return desc;
 
-  path target {data.parameters ? boost::apply_visitor(CdVisitor{*this}, data.parameters.get())
-                               : _home};
+  desc.status = Status::Ok;
 
-  // FIXME: this also resolves symlinks, which we do not want
-  target = canonical(target);
+  if (execute){
+    path target {data.parameters ? boost::apply_visitor(CdVisitor{*this}, data.parameters.get())
+                                : _home};
 
-  error_code error;
-  current_path(target, error);
+    // FIXME: this also resolves symlinks, which we do not want
+    target = canonical(target);
 
-  if (error) { // TODO: use throwing version instead
-    throw std::runtime_error("Error while running cd");
+    error_code error;
+    current_path(target, error);
+
+    if (error) { // TODO: use throwing version instead
+      throw std::runtime_error("Error while running cd");
+    }
+
+    _current = target;
+    if (_idx == _history.size()  - 1){
+      _idx = _history.size();
+      _history.emplace_back(target);
+    }
   }
 
-  _current = target;
-  if (_idx == _history.size()  - 1){
-    _idx = _history.size();
-    _history.emplace_back(target);
-  }
-
-  return Command::Status::Ok;
+  return desc;
 }
 
 const path& Cd::cwd() const {

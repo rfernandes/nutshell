@@ -1,6 +1,6 @@
 #include "History.h"
 
-#include <command/Command.h>
+#include <command/Parser.h>
 
 #include <boost/spirit/home/x3.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
@@ -8,34 +8,58 @@
 #include <pwd.h>
 
 using namespace std;
-
-namespace ast {
-  class list{};
-  class clear{};
-  class last{};
-
-  using functions = boost::variant <clear, list, last>;
-  using HistoryCommand = boost::variant <uint64_t, functions>;
-}
+using namespace std::experimental;
+namespace x3 = boost::spirit::x3;
 
 namespace {
-  namespace x3 = boost::spirit::x3;
+  namespace ast {
+    struct list{};
+    struct clear{};
+    struct prev{};
 
-  auto list = x3::rule<class list, ast::list>()
-    = x3::lit("list") >> x3::attr(ast::list{});
+    struct functions: x3::variant<clear, list, prev>{
+      using base_type = base_type;
+      using base_type::operator=;
+    };
+    using Command = boost::variant <uint64_t, functions>;
+  }
 
-  auto clear = x3::rule<class clear, ast::clear>()
-    = x3::lit("clear") >> x3::attr(ast::clear{});
+  struct list_class {};
+  struct clear_class {};
+  struct prev_class {};
+  struct functions_class: parser::type_annotation<Segment::Type::Function>{};
+  struct sigil_class: parser::type_annotation<Segment::Type::Builtin>{};
+  struct command_class{};
 
-  auto last = x3::rule<class last, ast::last>()
-    = x3::lit("last") >> x3::attr(ast::last{});
+  using list_type = x3::rule<list_class, ast::list>;
+  using clear_type = x3::rule<clear_class, ast::clear>;
+  using prev_type = x3::rule<prev_class, ast::prev>;
+  using functions_type = x3::rule<functions_class, ast::functions>;
+  using sigil_type = x3::rule<sigil_class>;
+  using command_type = x3::rule<command_class, ast::Command>;
 
-  auto functions = x3::rule<class functions, ast::functions>()
-    =  clear | list | last;
+  const list_type list = "list";
+  const clear_type clear = "clear";
+  const prev_type prev = "prev";
+  const functions_type functions = "functions";
+  const sigil_type sigil = "sigil";
+  const command_type command = "command";
 
-  auto historyCommand = x3::rule<class historyCommand, ast::HistoryCommand>()
-    = '!' >> ( x3::uint64 |
-               '.' >> functions);
+  auto list_def = "list" >> x3::attr(ast::list{});
+  auto clear_def = "clear" >> x3::attr(ast::clear{});
+  auto prev_def = "prev" >> x3::attr(ast::prev{});
+  auto functions_def = "." >> (clear | list | prev);
+  auto sigil_def = "!";
+  auto command_def = sigil >> (functions | x3::uint64);
+
+  BOOST_SPIRIT_DEFINE(
+    list,
+    clear,
+    prev,
+    functions,
+    sigil,
+    command
+  )
 
   Line empty;
 }
@@ -66,8 +90,8 @@ class Visitor {
       _history.clear();
     }
 
-    void operator()(const ast::last&) const {
-      _out << "Unimplemented - Execute last command\n";
+    void operator()(const ast::prev&) const {
+      _out << "Unimplemented - Execute prev command\n";
     }
 
     void operator()(uint64_t &idx) const {
@@ -110,30 +134,24 @@ const std::vector<Line>& History::list() const {
   return _history;
 }
 
-Command::Status History::execute(const Line& line, Output& out) {
+Description History::parse(const Line& line, Output& output, bool execute){
   auto iter = line.begin();
   auto endIter = line.end();
 
-  ast::HistoryCommand data;
-  const bool ok {x3::phrase_parse(iter, endIter, historyCommand, x3::space, data)};
+  Description desc;
+  const auto parser = x3::with<Description>(ref(desc))[
+                        x3::with<Line>(ref(line))[command]];
 
-  if (!ok || iter != endIter) return Command::Status::NoMatch;
+  ast::Command data;
+  const bool ok {x3::phrase_parse(iter, endIter, parser, x3::space, data)};
 
-  boost::apply_visitor(Visitor{*this, out}, data);
+  if (ok || iter == endIter){
+    desc.status = Status::Ok;
 
-  return Command::Status::Ok;
-}
+    if (execute){
+      boost::apply_visitor(Visitor{*this, output}, data);
+    }
+  }
 
-bool History::matches(const Line& line) const {
-  auto iter = line.begin();
-  auto endIter = line.end();
-
-  const bool ok {x3::phrase_parse(iter, endIter, historyCommand, x3::space)};
-
-  return ok || static_cast<size_t>(distance(line.begin(), iter)) == line.size();
-}
-
-
-Command::Suggestions History::suggestions(const Line& /*line*/) const {
-  return {};
+  return desc;
 }

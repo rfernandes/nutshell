@@ -3,16 +3,16 @@
 
 #include <command/Command.h>
 
+#include <set>
 #include <experimental/filesystem>
 
 class Executable: public Command {
-  std::experimental::filesystem::path _path;
-public:
-  Executable(const std::experimental::filesystem::path& path);
+  const std::set<std::string> _paths;
 
-  Command::Status execute(const Line& line, Output& out) override;
-  bool matches(const Line& line) const override;
-  Suggestions suggestions(const Line& line) const override;
+public:
+  Executable(std::set<std::string> paths);
+
+  Description parse(const Line& line, Output& output, bool execute) override;
 };
 
 #endif

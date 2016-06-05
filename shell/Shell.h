@@ -35,6 +35,8 @@ private:
   Function &_function;
   bool _exit;
   unsigned _column;
+
+  Command* _match;
 };
 
 #endif
