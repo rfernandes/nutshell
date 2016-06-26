@@ -4,24 +4,37 @@
 #include <shell/Line.h>
 #include <io/Output.h>
 
+#include <experimental/string_view>
 #include <unordered_set>
 #include <memory>
 
+class Command;
+
+enum class Status {
+  NoMatch,
+  Ok,
+  Incomplete,       // Command requires additional input
+};
+
+std::experimental::string_view slice(const std::string& str, size_t start, size_t length);
+
+struct Segment{
+  enum class Type{Command, Builtin, Function, Parameter, Argument, String};
+  Type type;
+  std::experimental::string_view view;
+};
+
+struct Description{
+  Status status {Status::NoMatch};
+  std::vector<Segment> segments;
+};
+
 class Command {
 public:
-  using Suggestions = std::vector<std::string>;
 
   virtual ~Command() = default;
 
-  enum class Status {
-    NoMatch,
-    Ok,
-    Incomplete,       // Command requires additional input
-  };
-
-  virtual Status execute(const Line& line, Output& out) = 0;
-  virtual bool matches(const Line& line) const = 0;
-  virtual Suggestions suggestions(const Line& line) const = 0;
+  virtual Description parse(const Line& line, Output& output, bool execute) = 0;
 };
 
 class CommandStore {
@@ -37,9 +50,7 @@ private:
   static CommandStore& instance();
   std::unordered_set<std::unique_ptr<Command>> _commands;
 
-  bool matches(const Line& line) const;
-  Command::Suggestions suggestions(const Line& line) const;
-  Command::Status execute(const Line& line, Output& output);
+  Description parse(const Line& line, Output& output, bool execute);
 
   friend class Shell;
   friend class Function;

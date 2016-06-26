@@ -6,13 +6,15 @@
 #include <unordered_map>
 
 class Function: public Command {
-  std::unordered_map<std::string, std::string> _functions;
 public:
-  Function(std::unordered_map<std::string, std::string> functions);
+  using Functions = std::unordered_map<std::string, std::string>;
+  Function(Functions functions);
 
-  bool matches(const Line & line) const override;
-  Suggestions suggestions(const Line & line) const override;
-  Command::Status execute(const Line & line, Output & out) override;
+  Description parse(const Line& line, Output& output, bool execute) override;
+
+private:
+  Functions _functions;
+
 };
 
 #endif

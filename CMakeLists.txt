@@ -25,13 +25,18 @@ shell/Path.cpp
 shell/Shell.cpp
 )
 
+find_package(Boost COMPONENTS system REQUIRED QUIET)
+
 target_include_directories(nutshell
 PRIVATE
 ${CMAKE_SOURCE_DIR}
+${Boost_INCLUDE_DIRS}
 )
+
 
 target_link_libraries(nutshell
 stdc++fs
+${Boost_LIBRARIES}
 )
 
 install(TARGETS nutshell RUNTIME DESTINATION bin)

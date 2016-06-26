@@ -13,14 +13,14 @@ class Cd: public Command {
   std::vector<path> _history; // TODO: continue from here fix this
   size_t _idx;
 
+  bool matches(const Line & line) const;
+
 public:
   Cd();
 
-  Command::Status execute(const Line & line, Output& curses) override;
-  bool matches(const Line& line) const override;
-  Suggestions suggestions(const Line& line) const override;
+  Description parse(const Line& line, Output& output, bool execute) override;
 
-  Command::Status cd(const Line& parameters, Output& curses);
+  Status cd(const Line& parameters, Output& curses);
 
   /// get the current directory
   const path& cwd() const;

@@ -9,7 +9,6 @@ class History: public Command {
   std::vector<Line>::const_iterator _idx;
 
   friend class Visitor;
-
 public:
   History();
 
@@ -23,9 +22,7 @@ public:
   void clear();
   const std::vector<Line>& list() const;
 
-  Command::Status execute(const Line& line, Output& out) override;
-  bool matches(const Line& line) const override;
-  Suggestions suggestions(const Line& line) const override;
+  Description parse(const Line& line, Output& output, bool execute) override;
 };
 
 #endif

@@ -3,15 +3,21 @@
 #include <command/Command.h>
 #include <shell/History.h>
 
+#include <experimental/string_view>
 #include <fstream>
 
 using namespace std;
+using namespace std::experimental;
 using namespace manip;
 
 class BuiltIn: public Command
 {
+  bool matches(const Line& line) const{
+    return line.substr(0, line.find_first_of(' ')) == _command;
+  }
+
 public:
-  using Function = function<Command::Status(const Line&, Output&)>;
+  using Function = function<Status(const Line&, Output&)>;
 
   BuiltIn(string command, Function function)
   : _command{move(command)}
@@ -21,16 +27,19 @@ public:
 
   ~BuiltIn() override = default;
 
-  bool matches(const Line& line) const override {
-    return line.substr(0, line.find_first_of(' ')) == _command;
-  }
+  Description parse(const Line& line, Output& output, bool execute) override {
+    auto matched = matches(line);
+    if (matched && execute){
+      _function(line, output);
+    }
 
-  Suggestions suggestions(const Line& line) const override {
-    return _command.compare(0, line.find_first_of(' '), line) == 0 ? Suggestions{_command} : Suggestions{};
-  }
+    Description desc;
+    if (matched){
+      desc.status = Status::Ok;
+      desc.segments.push_back({Segment::Type::Builtin, string_view{line}});
+    }
 
-  Command::Status execute(const Line& line, Output& out) override {
-    return matches(line) ? _function(line, out) : Command::Status::NoMatch;
+    return desc;
   }
 
 private:
@@ -54,31 +63,32 @@ Shell::Shell()
       "\"feed: \""}
     })}
 , _exit{false}
+, _match{nullptr}
 {
   setlocale(LC_ALL, "");
 
   CommandStore::store<BuiltIn>(":exit",
                                [&](const Line& /*line*/, Output& /*output*/){
                                  _exit = true;
-                                 return Command::Status::Ok;
+                                 return Status::Ok;
                                });
 
   CommandStore::store<BuiltIn>(":help",
                                [](const Line& /*line*/, Output& output){
                                  output << "No one can help you (for now)\n";
-                                 return Command::Status::Ok;
+                                 return Status::Ok;
                                });
 
   CommandStore::store<BuiltIn>(":cwd",
                                [&](const Line& /*line*/, Output& output){
                                  output << _cd.cwd().string();
-                                 return Command::Status::Ok;
+                                 return Status::Ok;
                                });
 
   // Comments are a simple no-op
   CommandStore::store<BuiltIn>("#",
                                [](const Line& /*line*/, Output& /*output*/){
-                                 return Command::Status::Ok;
+                                 return Status::Ok;
                                });
 
   // Source ~/nutshellrc
@@ -86,26 +96,56 @@ Shell::Shell()
   if (config) {
     string command;
     while (getline(config, command)) {
-      _store.execute(command, _out);
+      _store.parse(command, _out, true);
     }
   }
 }
 
 void Shell::line() {
   _cursor.column(_column);
-  auto matched = _store.matches(_line);
-  if (matched){
-    _out << Color::Green;
-  }
-  _out << _line;
-  if (matched){
+  auto matched = _store.parse(_line, _out, false);
+  if (matched.status != Status::NoMatch){
+    const auto view = string_view(_line);
+    auto it = view.begin();
+    for (const auto& segment: matched.segments){
+      if (it != segment.view.begin()){
+        _out << view.substr(it - view.begin(), distance(it, segment.view.begin()));
+      }
+      it = segment.view.end();
+
+      switch (segment.type){
+        case Segment::Type::Builtin:
+          _out << Color::Cyan;
+          break;
+        case Segment::Type::Command:
+          _out << Color::Green;
+          break;
+        case Segment::Type::Parameter:
+          _out << Color::Blue;
+          break;
+        case Segment::Type::Argument:
+          _out << Color::Magenta;
+          break;
+        case Segment::Type::String:
+          _out << Color::White;
+          break;
+        default:
+          _out << Color::Yellow;
+      }
+      _out << segment.view;
+    }
     _out << Color::Reset;
+    if (it != view.end()){
+      _out << view.substr(it - view.begin());
+    }
+  }else{
+    _out << Color::Red << _line << Color::Reset;
   }
 }
 
 void Shell::prompt() {
   // call Function "directly", instead of going through store
-  _function.execute(":prompt", _out);
+  _function.parse(":prompt", _out, true);
   _column = _cursor.position().x;
 }
 
@@ -133,14 +173,17 @@ int Shell::run() {
 
         if (!buffer.empty()) {
           try{
-            switch (_store.execute(buffer, _out)) {
-              case Command::Status::Ok:
+            const Description executionResult {
+              _match ? _match->parse(buffer, _out, true)
+                     : _store.parse(buffer, _out, true)};
+            switch (executionResult.status) {
+              case Status::Ok:
                 break;
-              case Command::Status::NoMatch:
+              case Status::NoMatch:
                 _out << "Command not found [" << _line.substr(0, _line.find_first_of(' ')) << "]\n";
                 break;
-              case Command::Status::Incomplete:
-                _function.execute(":prompt_feed", _out);
+              case Status::Incomplete:
+                _function.parse(":prompt_feed", _out, true);
                 _column = _cursor.position().x;
                 buffer += "\n";
                 _line = Line{};
@@ -155,19 +198,19 @@ int Shell::run() {
         }
         prompt();
         break;
-      case '\t': { // Tab
-        const auto& suggestions = _store.suggestions(_line);
-        if (!suggestions.empty()) {
-          if (suggestions.size() == 1) {
-            _line = suggestions.at(0);
-          }
-          for (auto& suggestion: suggestions) {
-            _out << " " << suggestion;
-          }
-          _out << "\n";
-        }
-        break;
-      }
+//       case '\t': { // Tab
+//         const auto& suggestions = _store.suggestions(_line);
+//         if (!suggestions.empty()) {
+//           if (suggestions.size() == 1) {
+//             _line = suggestions.at(0);
+//           }
+//           for (auto& suggestion: suggestions) {
+//             _out << " " << suggestion;
+//           }
+//           _out << "\n";
+//         }
+//         break;
+//       }
       case Input::Backspace:
       case '\b': // Ctrl-H
         if (_line.empty() || _column == _cursor.position().x){

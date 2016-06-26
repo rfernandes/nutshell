@@ -1,7 +1,7 @@
 #include "Pid.h"
+#include <command/Parser.h>
 
 #include <fstream>
-
 #include <experimental/filesystem>
 
 #include <boost/spirit/home/x3.hpp>
@@ -12,6 +12,8 @@
 
 using namespace std;
 using namespace std::experimental::filesystem;
+
+namespace x3 = boost::spirit::x3;
 
 namespace {
   // TODO: move to Utils header
@@ -33,39 +35,62 @@ namespace ast {
 
   struct cwd{};
 
+  using name = string;
+
   using functions = boost::variant<kill, wait, cwd>;
 
-  struct pid_command{
+  struct PidCommand{
     boost::optional<Pid> pid;
     boost::optional<functions> function;
   };
 }
 
-BOOST_FUSION_ADAPT_STRUCT(ast::pid_command, pid, function)
+BOOST_FUSION_ADAPT_STRUCT(ast::PidCommand, pid, function)
 BOOST_FUSION_ADAPT_STRUCT(ast::kill, signal)
 BOOST_FUSION_ADAPT_STRUCT(ast::wait, seconds)
 
 namespace {
-  namespace x3 = boost::spirit::x3;
 
-  auto kill = x3::rule<class kill, ast::kill>()
-    = x3::lit("kill") >>  ( '(' >> - x3::uint8 >> ')' );
+  struct kill_class {};
+  struct wait_class {};
+  struct cwd_class {};
+  struct functions_class: parser::type_annotation<Segment::Type::Function>{};
+  struct sigil_class: parser::type_annotation<Segment::Type::Builtin>{};
+  struct command_class{};
 
-  auto wait = x3::rule<class waitFunction, ast::wait>()
-    = x3::lit("wait") >> '(' >> x3::uint64 >> ')';
+  using kill_type = x3::rule<kill_class, ast::kill>;
+  using wait_type = x3::rule<wait_class, ast::wait>;
+  using cwd_type = x3::rule<cwd_class, ast::cwd>;
+  using functions_type = x3::rule<functions_class, ast::functions>;
+  using name_type = x3::rule<cwd_class, ast::name>;
+  using sigil_type = x3::rule<sigil_class>;
+  using command_type = x3::rule<command_class, ast::PidCommand>;
 
-  auto cwd =  x3::rule<class cwd, ast::cwd>()
-    = "cwd" >> x3::attr(ast::cwd{});
+  const kill_type kill = "kill";
+  const wait_type wait = "wait";
+  const cwd_type cwd = "cwd";
+  const functions_type functions = "functions";
+  const name_type name = "name";
+  const sigil_type sigil = "sigil";
+  const command_type command = "command";
 
-  auto functions = x3::rule<class functions, ast::functions>()
-    = kill | wait | cwd;
+  auto kill_def = x3::lit("kill") >>  ( '(' >> - x3::uint8 >> ')' );
+  auto wait_def = x3::lit("wait") >> '(' >> x3::uint64 >> ')';
+  auto cwd_def = "cwd" >> x3::attr(ast::cwd{});
+  auto functions_def = kill | wait | cwd;
+  auto name_def = '"' >> x3::no_skip[+~x3::char_('"')] >> '"' | x3::alpha >> *x3::alnum;
+  auto sigil_def = '^';
+  auto command_def = sigil >> -(x3::uint_ | name) >> - x3::no_skip[ '.' >> functions ];
 
-  auto pidName = x3::rule<class pidName, string>()
-    = '"' >> x3::no_skip[+~x3::char_('"')] >> '"' |
-      x3::alpha >> *x3::alnum;
-
-  auto pidCommand = x3::rule<class pidCommand, ast::pid_command>()
-    = '^' >> - (x3::uint_ | pidName) >> - x3::no_skip[ '.' >> functions ];
+  BOOST_SPIRIT_DEFINE(
+    kill,
+    wait,
+    cwd,
+    functions,
+    name,
+    sigil,
+    command
+  )
 
   struct PidVisitor {
     unsigned operator()(unsigned& i) const {
@@ -122,37 +147,33 @@ namespace {
   };
 }
 
-bool Pid::matches(const Line & line) const {
+Description Pid::parse(const Line& line, Output& output, bool execute) {
   auto iter = line.begin();
   auto endIter = line.end();
 
-  const bool ok {x3::phrase_parse(iter, endIter, pidCommand, x3::space)};
+  Description desc;
+  const auto parser = x3::with<Description>(ref(desc))[
+                        x3::with<Line>(ref(line))[command]];
 
-  return ok || static_cast<size_t>(distance(line.begin(), iter)) == line.size();
-}
 
-Command::Suggestions Pid::suggestions(const Line & /*line*/) const {
-  return {};
-}
+  ast::PidCommand data;
+  const bool ok {x3::phrase_parse(iter, endIter, parser, x3::space, data)};
 
-Command::Status Pid::execute(const Line & line, Output & output){
-  auto iter = line.begin();
-  auto endIter = line.end();
-
-  ast::pid_command data;
-  const bool ok {x3::phrase_parse(iter, endIter, pidCommand, x3::space, data)};
-
-  if (!ok) return Command::Status::NoMatch;
+  if (!ok) return desc;
 
   const unsigned pid = data.pid ? boost::apply_visitor(PidVisitor{}, data.pid.get())
                                 : getpid();
 
-  if (data.function) {
-    boost::apply_visitor(FunctionVisitor{pid, output}, data.function.get());
-  } else {
-    output << pid << "\n";
+  desc.status = Status::Ok;
+
+  if (execute) {
+    if (data.function) {
+      boost::apply_visitor(FunctionVisitor{pid, output}, data.function.get());
+    } else {
+      output << pid << "\n";
+    }
   }
-  return Command::Status::Ok;
+  return desc;
 }
 
 namespace {

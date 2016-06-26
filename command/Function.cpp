@@ -1,75 +1,103 @@
 #include "Function.h"
 
+#include <command/Parser.h>
+
 #include <boost/spirit/home/x3.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
 
-#include <iostream>
-
 using namespace std;
+
+namespace x3 = boost::spirit::x3;
 
 namespace {
-  namespace x3 = boost::spirit::x3;
+  namespace ast {
+    using Name = string;
 
-  const auto functionName = x3::rule<class functionName, string>()
-    = x3::no_skip[ -x3::char_(":") >>  x3::alpha >> *(x3::alnum|x3::char_("_-")) ];
+    struct assign{
+      string content;
+      bool finished;
+    };
 
-  // FIXME: Try to use *char >> attr{done_tag_type}*char to generate pair<string, done_tag_type>
-  const auto command = x3::rule<class command, vector<string>>()
-    = functionName >> -('{' >> *(~x3::char_('}')) >> -('}' >> x3::attr(string{})));
+    struct Command{
+      Name name;
+      boost::optional<assign> content;
+    };
+  }
 }
 
-using namespace std;
+BOOST_FUSION_ADAPT_STRUCT(ast::assign, content, finished)
+BOOST_FUSION_ADAPT_STRUCT(ast::Command, name, content)
+
+namespace {
+  struct assign_class{};
+  struct name_class: parser::type_annotation<Segment::Type::Function>{};
+  struct command_class{};
+
+  using assign_type = x3::rule<assign_class, ast::assign>;
+  using name_type = x3::rule<name_class, ast::Name>;
+  using command_type = x3::rule<command_class, ast::Command>;
+
+  const assign_type assign = "assign";
+  const name_type name = "name";
+  const command_type command = "command";
+
+  auto assign_def = '{' >> *(~x3::char_('}')) >> -('}' >> x3::attr(bool{true}));
+  auto name_def = x3::lexeme[ -x3::char_(":") >>  x3::alpha >> *(x3::alnum | x3::char_("_-")) ];
+  auto command_def = name >> -assign;
+
+  BOOST_SPIRIT_DEFINE(
+    assign,
+    name,
+    command
+  )
+
+  const auto match_name = [](auto &ctx, Function::Functions& functions) {
+    const ast::Command& data = x3::_attr(ctx);
+    if (!data.content && !functions.count(data.name)){
+      x3::_pass(ctx) = false;
+    }
+  };
+}
 
 Function::Function(unordered_map<string, string> functions)
 : _functions{functions}
 {}
 
-Command::Status Function::execute(const Line& line, Output& out)
-{
+Description Function::parse(const Line& line, Output& output, bool execute){
   auto iter = line.begin();
-  auto endIter = line.end();
+  const auto& endIter = line.end();
 
-  vector<string> data;
+  Description desc;
+  const auto parser = x3::with<Description>(ref(desc))[
+                        x3::with<Line>(ref(line))[command]];
 
-  const bool ok {x3::parse(iter, endIter, command, data)};
+  using namespace std::placeholders;
+  auto matcher = [&](auto &ctx){
+    return match_name(ctx, _functions);
+  };
 
-  if (!ok) {
-    return Command::Status::NoMatch;
-  }
+  ast::Command data;
+  bool ok {x3::phrase_parse(iter, endIter, parser[matcher], x3::space, data)};
 
-  switch (data.size()){
-    case 3:
-      _functions[data.front()] = data[1];
-      break;
-    case 1: {
-      const auto it = _functions.find(data.front());
-      if (it == _functions.end()){
-        return Command::Status::NoMatch;
+  if (ok) {
+    desc.status = Status::Ok;
+    if (execute){
+      if (data.content){
+        if (data.content.get().finished){
+          _functions[data.name] = data.content.get().content;
+        }
+      }else{
+        // Assured
+        // TODO: assign through semantic action so we don't have to loopup twice
+        const auto& function = _functions.at(data.name);
+        stringstream functionBody{function};
+        string line;
+        while (getline(functionBody, line)) {
+          CommandStore::instance().parse(line, output, true);
+        }
       }
-      stringstream functionBody{it->second};
-      string line;
-      while (getline(functionBody, line)) {
-        CommandStore::instance().execute(line, out);
-      }
-      break;
     }
-    default:
-      return Command::Status::Incomplete;
   }
-  return Command::Status::Ok;
+  return desc;
 }
 
-bool Function::matches(const Line& line) const
-{
-  auto iter = line.begin();
-  auto endIter = line.end();
-  vector<string> data;
-  const bool ok {x3::parse(iter, endIter, command, data)};
-
-  return (ok || iter != line.begin()) && (!data.empty() && _functions.count(data.front()));
-}
-
-Command::Suggestions Function::suggestions(const Line& /*line*/) const
-{
-  return Suggestions{};
-}

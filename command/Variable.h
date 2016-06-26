@@ -6,14 +6,15 @@
 #include <unordered_map>
 
 class Variable: public Command{
-  std::unordered_map<std::string, std::string> _variables;
-
-  friend class VariableVisitor;
 public:
+  using Store = std::unordered_map<std::string, std::string>;
+
   Variable();
-  Command::Status execute(const Line& line, Output& out) override;
-  bool matches(const Line& line) const override;
-  Suggestions suggestions(const Line& line) const override;
+  Description parse(const Line& line, Output& output, bool execute) override;
+
+private:
+  friend class VariableVisitor;
+  Store  _variables;
 };
 
 #endif
