@@ -5,27 +5,20 @@
 #include <boost/spirit/home/x3.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
 
+#include <unistd.h>
+#include <sys/wait.h>
+
 using namespace std;
 using namespace std::experimental;
 
 namespace x3 = boost::spirit::x3;
 
 namespace {
-  // Pipe to capture output
-  Status launch(const Line &line, Output& out) {
-    unique_ptr<FILE, decltype(&pclose)> pipe{popen(line.data(), "r"), pclose};
-    if (!pipe){
-      throw std::runtime_error("Unable to fork/pipe");
-    }
-    constexpr size_t bufferSize{1024};
-    char buffer[bufferSize];
-    while (!feof(pipe.get())) {
-      if (fgets(buffer, bufferSize, pipe.get()) != NULL) {
-        out << buffer;
-      }
-    }
-    return Status::Ok;
-  }
+  enum PipeDescriptors {
+    READ  = 0,
+    WRITE = 1
+  };
+
   namespace ast {
     using Parameters = string;
     using Executable = string;
@@ -38,7 +31,6 @@ namespace {
 }
 
 BOOST_FUSION_ADAPT_STRUCT(ast::Command, command, parameters)
-
 
 namespace {
   struct parameter_class: parser::type_annotation<Segment::Type::Parameter>{};
@@ -62,6 +54,67 @@ namespace {
     executable,
     command
   )
+
+  // Pipe to capture output
+  void launch(const ast::Command &command, Output& output) {
+    int toChild[2];
+    int fromChild[2];
+
+    // FIXME: check for non null return
+    pipe(toChild);
+    pipe(fromChild);
+
+    switch (auto pid=fork()){
+      case -1:
+        throw std::runtime_error("Unable to fork");
+        break;
+      case 0: { // Child
+        dup2(toChild[READ], STDIN_FILENO);
+        dup2(fromChild[WRITE], STDOUT_FILENO);
+        dup2(fromChild[WRITE], STDERR_FILENO);
+        close(toChild[WRITE]);
+        close(fromChild[READ]);
+        std::vector<const char*> args;
+        args.emplace_back(command.command.c_str());
+        std::transform(command.parameters.begin(),
+                       command.parameters.end(),
+                       std::back_inserter(args), [](auto &str){
+                         return str.data();
+                       });
+        args.emplace_back(nullptr);
+        execvp(command.command.data(), const_cast<char*const*>(&args[0]));
+        std::terminate();
+        break;
+      }
+      default: // Parent
+        const auto bufferSize = 100;
+        char buffer[bufferSize+1];
+        close(toChild[READ]);
+        close(fromChild[WRITE]);
+        int status;
+        bool finished = false;
+        while (!finished) {
+          switch (size_t readResult = read(fromChild[READ], buffer, bufferSize)){
+            case 0: /* End-of-File, or non-blocking read. */
+              waitpid(pid, &status, 0);
+              finished = true;
+              break;
+            case -1:
+              if (errno == EINTR ||
+                  errno == EAGAIN){
+                errno = 0;
+                break;
+              }else{
+                throw std::runtime_error("Reading from child faild");
+              }
+            default:
+              output.write(buffer, readResult);
+              break;
+          }
+        }
+        break;
+    };
+  }
 }
 
 Executable::Executable(std::set<std::string> paths)
@@ -87,7 +140,7 @@ Description Executable::parse(const Line& line, Output& output, bool execute){
     desc.status = Status::Ok;
 
     if (execute){
-      launch(line, output);
+      launch(data, output);
     }
   }
 
