@@ -74,8 +74,8 @@ namespace {
   const sigil_type sigil = "sigil";
   const command_type command = "command";
 
-  auto kill_def = x3::lit("kill") >>  ( '(' >> - x3::uint8 >> ')' );
-  auto wait_def = x3::lit("wait") >> '(' >> x3::uint64 >> ')';
+  auto kill_def = x3::lit("kill") >> -x3::uint8;
+  auto wait_def = x3::lit("wait") >> x3::uint64;
   auto cwd_def = "cwd" >> x3::attr(ast::cwd{});
   auto functions_def = kill | wait | cwd;
   auto name_def = '"' >> x3::no_skip[+~x3::char_('"')] >> '"' | x3::alpha >> *x3::alnum;

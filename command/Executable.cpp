@@ -94,7 +94,7 @@ namespace {
         int status;
         bool finished = false;
         while (!finished) {
-          switch (size_t readResult = read(fromChild[READ], buffer, bufferSize)){
+          switch (auto readResult = read(fromChild[READ], buffer, bufferSize)){
             case 0: /* End-of-File, or non-blocking read. */
               waitpid(pid, &status, 0);
               finished = true;
