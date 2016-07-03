@@ -3,12 +3,38 @@
 #include <command/Command.h>
 #include <shell/History.h>
 
+#include <algorithm>
 #include <experimental/string_view>
 #include <fstream>
 
 using namespace std;
 using namespace std::experimental;
 using namespace manip;
+
+
+namespace {
+
+  inline bool is_utf8(char bute){
+    return (bute & 0xc0) != 0x80;
+  }
+
+  inline short utf8_bytes(char ch){
+    return (ch & 0b100'00000) == 0b0000'0000 ? 1:
+           (ch & 0b111'00000) == 0b1100'0000 ? 2:
+           (ch & 0b111'10000) == 0b1110'0000 ? 3:
+           (ch & 0b111'11000) == 0b1111'0000 ? 4: 0;
+  }
+
+  //TODO: Move to Utils
+  size_t utf8_size(const std::string& str){
+    return count_if(str.begin(), str.end(), is_utf8);
+  }
+
+  /// Returns the utf8 codepoint of byte position idx
+  size_t utf8_idx(const std::string& str, unsigned idx){
+    return count_if(str.begin(), str.begin() + idx, is_utf8);
+  }
+}
 
 class BuiltIn: public Command
 {
@@ -63,6 +89,7 @@ Shell::Shell()
       "\"feed: \""}
     })}
 , _exit{false}
+, _utf8Bytes{0}
 , _match{nullptr}
 {
   setlocale(LC_ALL, "");
@@ -147,6 +174,7 @@ void Shell::prompt() {
   // call Function "directly", instead of going through store
   _function.parse(":prompt", _out, true);
   _column = _cursor.position().x;
+  _idx = 0;
 }
 
 void Shell::debug(unsigned ch, Cursor::Position position = Cursor::Position{1,1}) {
@@ -185,6 +213,7 @@ int Shell::run() {
               case Status::Incomplete:
                 _function.parse(":prompt_feed", _out, true);
                 _column = _cursor.position().x;
+                _idx = 0;
                 buffer += "\n";
                 _line = Line{};
                 continue;
@@ -194,7 +223,7 @@ int Shell::run() {
           }
           history.add(buffer);
           buffer.clear();
-          _line = Line{};
+          _line.clear();
         }
         prompt();
         break;
@@ -213,59 +242,58 @@ int Shell::run() {
 //       }
       case Input::Backspace:
       case '\b': // Ctrl-H
-        if (_line.empty() || _column == _cursor.position().x){
+        if (!_idx){
           break;
         }
         _cursor.left();
+        while (!is_utf8(_line[--_idx])){};
       case Input::Delete: {
-        _line.erase(_cursor.position().x - _column, 1);
-        auto push = _cursor.position().x;
+        _line.erase(_idx, utf8_bytes(_line[_idx]));
         line();
         _out << Erase::CursorToEnd;
-        _cursor.column(push);
+        _cursor.column(utf8_idx(_line, _idx) + _column);
         break;
       }
       case Input::Left:
-        if (_cursor.position().x > _column)
+        if (_idx > 0){
           _cursor.left();
+          while (!is_utf8(_line[--_idx])){}
+        }
         break;
       case Input::Right:
-        if (_cursor.position().x < _column + _line.size())
+        if (_line[_idx]){
           _cursor.right();
+          _idx += utf8_bytes(_line[_idx]);;
+        }
         break;
       case Input::Up:
       case Input::Down: {
         _line = keystroke == Input::Down ? history.forward(_line) : history.backward(_line);
         line();
+        _idx = utf8_size(_line);
         _out << Erase::CursorToEnd;
         break;
       }
       case Input::Home:
       case Input::End:
-        _cursor.column(keystroke == Input::Home ? _column: _column + _line.size());
+        _idx = _line.size();
+        _cursor.column(keystroke == Input::Home ? _column: _column + utf8_size(_line));
         break;
       case 18: //Ctrl-R
         _out << "History interactive mode unimplemented\n";
         break;
       case 23:{ //Ctrl-W
-        auto pos = _cursor.position().x - _column;
-        if (pos > 0){
-          --pos;
-        } else {
+        if (!_idx){
           break;
         }
-        auto start = _line.find_last_not_of(" ", pos);
-        auto idx = _line.find_last_of(" ", start);
-        if (idx == string::npos){
-          idx = 0;
-        } else {
-          ++idx;
-        }
-
-        _line.erase(idx, pos + 1 - idx);
+        auto start = _idx;
+        while (--_idx && _line[_idx] == ' '){};
+        while (_idx-- && _line[_idx] != ' '){};
+        if (_idx != 0) ++_idx;
+        _line.erase(_idx, start - _idx);
         line();
         _out << Erase::CursorToEnd;
-        _cursor.column(_column + idx);
+        _cursor.column(utf8_idx(_line, _idx) + _column);
         break;
       }
       case 4: //Ctrl-D
@@ -274,16 +302,18 @@ int Shell::run() {
       case Input::Unknown: // Unknown special key received
         break; // ignore list
       default: {
-
         if (keystroke > 0xff) {
           _out << "■";
           continue;
         }
-
-        _line.insert(_cursor.position().x - _column, 1, keystroke);
-        auto push = _cursor.position().x + 1;
-        line();
-        _cursor.column(push);
+        _line.insert(_idx++, 1, keystroke);
+        if (!_utf8Bytes){
+          _utf8Bytes += utf8_bytes(keystroke);
+        }
+        if (!--_utf8Bytes){
+          line();
+          _cursor.column(utf8_idx(_line, _idx) + _column);
+        }
         break;
       }
     }

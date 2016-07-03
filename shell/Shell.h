@@ -35,6 +35,8 @@ private:
   Function &_function;
   bool _exit;
   unsigned _column;
+  unsigned _idx;
+  short _utf8Bytes;
 
   Command* _match;
 };
