@@ -74,7 +74,8 @@ private:
 };
 
 Shell::Shell()
-: _store(CommandStore::instance())
+: _store{CommandStore::instance()}
+, _historu{CommandStore::store<History>()}
 , _out{cout}
 , _cd{CommandStore::store<Cd>()}
 , _function{
@@ -168,6 +169,13 @@ void Shell::line() {
   }else{
     _out << Color::Red << _line << Color::Reset;
   }
+
+  // Update suggestions
+  _suggestion = _historu.suggest(_line);
+  if (!_suggestion.empty()){
+    _out << _suggestion.substr(_line.size()) << Color::Reset;
+  }
+  _out << Erase::CursorToEnd;
 }
 
 void Shell::prompt() {
@@ -189,11 +197,14 @@ int Shell::run() {
 
   Line buffer;
 
-  auto& history = CommandStore::store<History>();
-
   unsigned keystroke;
   while (!_exit && (keystroke = _in.get())) {
     switch (keystroke) {
+      case Input::CtrlM:
+        if (!_suggestion.empty()){
+          _line = _suggestion.to_string();
+          _suggestion = Suggestion{};
+        }
       case '\n':
         _out << '\n';
 
@@ -215,31 +226,20 @@ int Shell::run() {
                 _column = _cursor.position().x;
                 _idx = 0;
                 buffer += "\n";
-                _line = Line{};
+                _line.clear();
+                _suggestion = Suggestion{};
                 continue;
             }
           } catch (exception& ex) {
             _out << "Error " << ex.what() << "\n";
           }
-          history.add(buffer);
+          _historu.add(buffer);
           buffer.clear();
           _line.clear();
+          _suggestion = Suggestion{};
         }
         prompt();
         break;
-//       case '\t': { // Tab
-//         const auto& suggestions = _store.suggestions(_line);
-//         if (!suggestions.empty()) {
-//           if (suggestions.size() == 1) {
-//             _line = suggestions.at(0);
-//           }
-//           for (auto& suggestion: suggestions) {
-//             _out << " " << suggestion;
-//           }
-//           _out << "\n";
-//         }
-//         break;
-//       }
       case Input::Backspace:
       case '\b': // Ctrl-H
         if (!_idx){
@@ -250,7 +250,6 @@ int Shell::run() {
       case Input::Delete: {
         _line.erase(_idx, utf8_bytes(_line[_idx]));
         line();
-        _out << Erase::CursorToEnd;
         _cursor.column(utf8_idx(_line, _idx) + _column);
         break;
       }
@@ -268,10 +267,9 @@ int Shell::run() {
         break;
       case Input::Up:
       case Input::Down: {
-        _line = keystroke == Input::Down ? history.forward(_line) : history.backward(_line);
+        _line = keystroke == Input::Down ? _historu.forward(_line) : _historu.backward(_line);
         line();
         _idx = utf8_size(_line);
-        _out << Erase::CursorToEnd;
         break;
       }
       case Input::Home:
@@ -292,7 +290,6 @@ int Shell::run() {
         if (_idx != 0) ++_idx;
         _line.erase(_idx, start - _idx);
         line();
-        _out << Erase::CursorToEnd;
         _cursor.column(utf8_idx(_line, _idx) + _column);
         break;
       }

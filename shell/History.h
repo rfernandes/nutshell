@@ -4,6 +4,8 @@
 #include <command/Command.h>
 #include <shell/Line.h>
 
+#include <experimental/string_view>
+
 class History: public Command {
   std::vector<Line> _history;
   std::vector<Line>::const_iterator _idx;
@@ -21,6 +23,8 @@ public:
 
   void clear();
   const std::vector<Line>& list() const;
+
+  std::experimental::string_view suggest(const Line& line) const;
 
   Description parse(const Line& line, Output& output, bool execute) override;
 };

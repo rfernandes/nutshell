@@ -134,6 +134,18 @@ const std::vector<Line>& History::list() const {
   return _history;
 }
 
+string_view History::suggest(const Line& line) const {
+  string_view ret;
+  if (!line.empty()){
+    for (const auto& item: _history){
+      if (item.compare(0, line.length(), line) == 0) {
+        ret = item;
+      }
+    }
+  }
+  return ret;
+}
+
 Description History::parse(const Line& line, Output& output, bool execute){
   auto iter = line.begin();
   auto endIter = line.end();
@@ -145,7 +157,7 @@ Description History::parse(const Line& line, Output& output, bool execute){
   ast::Command data;
   const bool ok {x3::phrase_parse(iter, endIter, parser, x3::space, data)};
 
-  if (ok || iter == endIter){
+  if (ok){
     desc.status = Status::Ok;
 
     if (execute){

@@ -7,6 +7,7 @@
 #include <experimental/string_view>
 #include <unordered_set>
 #include <memory>
+#include <vector>
 
 class Command;
 

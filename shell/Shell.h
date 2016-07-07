@@ -10,6 +10,7 @@
 #include <shell/Line.h>
 
 class CommandStore;
+class History;
 
 class Shell {
 public:
@@ -25,8 +26,10 @@ private:
 
   void prompt();
 
-  CommandStore& _store;
   Line _line;
+  CommandStore& _store;
+  History& _historu;
+  Suggestion _suggestion;
   Input _in;
   Output& _out;
   Cursor _cursor;

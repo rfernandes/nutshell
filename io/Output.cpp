@@ -30,5 +30,4 @@ std::ostream& operator<< (std::ostream& out, const rgb& manip) {
   return out << "\x1b[38;2;" << +manip._red << ';' << +manip._green << ';' << +manip._blue << 'm';
 }
 
-
 }

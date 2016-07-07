@@ -19,6 +19,7 @@ namespace {
       case 'D': return Input::Left;
       case 'H': return Input::Home;
       case 'F': return Input::End;
+      case 'M': return Input::CtrlM;
       case '1': {
         cin.get(); // Skip ;
         switch (ch = cin.get()) {

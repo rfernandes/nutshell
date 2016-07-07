@@ -20,7 +20,8 @@ public:
     CtrlRight,
     CtrlHome,
     CtrlEnd,
-    Delete
+    CtrlM,
+    Delete,
   };
 
   Input();
