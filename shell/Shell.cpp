@@ -155,7 +155,7 @@ void Shell::line() {
           _out << Color::Magenta;
           break;
         case Segment::Type::String:
-          _out << Color::White;
+          _out << Color::BoldBlue;
           break;
         default:
           _out << Color::Yellow;

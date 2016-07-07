@@ -8,7 +8,11 @@ namespace manip {
 enum class Erase: uint8_t { CursorToEnd, CursorToBegin, All};
 std::ostream& operator<< (std::ostream& out, Erase eraseType);
 
-enum class Color: uint8_t {Black, Red, Green, Yellow, Blue, Magenta, Cyan, White, Reset};
+enum class Color: uint8_t {
+  Black, Red, Green, Yellow, Blue, Magenta, Cyan, White,
+  BoldBlack, BoldRed, BoldGreen, BoldYellow, BoldBlue, BoldMagenta, BoldCyan, BoldWhite, Reset
+};
+
 std::ostream& operator<< (std::ostream& out, Color color);
 
 class rgb{

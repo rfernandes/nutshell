@@ -4,6 +4,10 @@
 
 using namespace std;
 
+bool isBold(manip::Color color){
+  return color >= manip::Color::BoldBlack && color < manip::Color::Reset;
+}
+
 namespace manip {
 
 std::ostream& operator<< (std::ostream& out, Erase eraseType) {
@@ -14,7 +18,9 @@ std::ostream& operator<< (std::ostream& out, Color color) {
   if (color == Color::Reset) {
     out << "\x1b[39;49m";
   } else {
-    out << "\x1b[3" << +static_cast<std::underlying_type_t<Color>>(color) << 'm';
+    auto colorValue = static_cast<std::underlying_type_t<Color>>(color) & 0b111;
+
+    out << "\x1b[" << (isBold(color) ? "1;3" : "3") << +colorValue << 'm';
   }
   return out;
 }
