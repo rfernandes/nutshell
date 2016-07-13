@@ -39,6 +39,11 @@ private:
   short _utf8Bytes;
 
   Command* _match;
+
+  // Features
+  bool _predictive;
+  bool _assistive;
+
 };
 
 #endif

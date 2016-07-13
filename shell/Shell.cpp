@@ -93,6 +93,8 @@ Shell::Shell()
 , _exit{false}
 , _utf8Bytes{0}
 , _match{nullptr}
+, _predictive{true}
+, _assistive{false}
 {
   setlocale(LC_ALL, "");
 
@@ -117,6 +119,20 @@ Shell::Shell()
   // Comments are a simple no-op
   CommandStore::store<BuiltIn>("#",
                                [](const Line& /*line*/, Output& /*output*/){
+                                 return Status::Ok;
+                               });
+
+  // Toggle predictive functionality
+  CommandStore::store<BuiltIn>(":predictive",
+                               [&](const Line& /*line*/, Output& /*output*/){
+                                 _predictive = !_predictive;
+                                 return Status::Ok;
+                               });
+
+  // Toggle predictive functionality
+  CommandStore::store<BuiltIn>(":assistive",
+                               [&](const Line& /*line*/, Output& /*output*/){
+                                 _assistive = !_assistive;
                                  return Status::Ok;
                                });
 
@@ -217,29 +233,31 @@ void Shell::line() {
     }
 
     // Assistive (description)
-    _cursor.save();
-    auto column = _cursor.position().x;
+    if (_assistive){
+      _cursor.save();
+      auto column = _cursor.position().x;
 
-    auto segments = matched.segments.size();
-    stringstream block;
-    assist(block, view.begin(), matched, segments);
+      auto segments = matched.segments.size();
+      stringstream block;
+      assist(block, view.begin(), matched, segments);
 
-    auto lastLine{false};
+      auto lastLine{false};
 
-    string line;
-    while (getline(block, line)){
-      _cursor.forceDown();
-      lastLine |= _cursor.max().y == _cursor.position().y;
-      _cursor.column(_column);
-      _out << line << Color::Reset << Erase::CursorToEnd;
-    }
+      string line;
+      while (getline(block, line)){
+        _cursor.forceDown();
+        lastLine |= _cursor.max().y == _cursor.position().y;
+        _cursor.column(_column);
+        _out << line << Color::Reset << Erase::CursorToEnd;
+      }
 
-    if (lastLine ){
-      _cursor.up(segments);
-      _cursor.column(column);
-    }else{
-      _out << "\n" << Erase::CursorToEnd;
-      _cursor.restore();
+      if (lastLine ){
+        _cursor.up(segments);
+        _cursor.column(column);
+      }else{
+        _out << "\n" << Erase::CursorToEnd;
+        _cursor.restore();
+      }
     }
 
   }else{
@@ -247,11 +265,13 @@ void Shell::line() {
   }
 
   // Update suggestions
-  _suggestion = _historu.suggest(_line);
-  if (!_suggestion.empty()){
-    _out << _suggestion.substr(_line.size()) << Color::Reset;
+  if (_predictive){
+    _suggestion = _historu.suggest(_line);
+    if (!_suggestion.empty()){
+      _out << _suggestion.substr(_line.size()) << Color::Reset;
+    }
+    _out << Erase::CursorToEnd;
   }
-  _out << Erase::CursorToEnd;
 }
 
 void Shell::prompt() {
