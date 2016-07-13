@@ -34,6 +34,7 @@ namespace {
   size_t utf8_idx(const std::string& str, unsigned idx){
     return count_if(str.begin(), str.begin() + idx, is_utf8);
   }
+
 }
 
 class BuiltIn: public Command
@@ -129,6 +130,54 @@ Shell::Shell()
   }
 }
 
+/* FIXME: Perhaps Line should be included in Description
+*  TODO:
+*    Cleanup single suggestion when deleting last match
+*    Clear &/Pad when executed
+*    Compact view (maximise line information)
+*/
+ostream & assist(ostream &out, const Suggestion::const_iterator &start, const Description &description, size_t idx){
+  auto it = start;
+  for (size_t i = 0; i < idx; ++i) {
+    const auto &segment = description.segments.at(i);
+    const auto start = distance(it, segment.view.begin());
+    it = segment.view.begin();
+    fill_n(ostreambuf_iterator<char>(out), start, ' ');
+    if (i + 1 == idx){
+
+      switch (segment.type){
+        case Segment::Type::Builtin:
+          out << Color::Cyan;
+          break;
+        case Segment::Type::Command:
+          out << Color::Green;
+          break;
+        case Segment::Type::Parameter:
+          out << Color::Blue;
+          break;
+        case Segment::Type::Argument:
+          out << Color::Magenta;
+          break;
+        case Segment::Type::String:
+          out << Mode::Bold << Color::Blue;
+          break;
+        default:
+          out << Color::Yellow;
+      }
+      out << "╰╸last";
+    }else{
+      out << "│" << Color::Reset;
+      ++it;
+    }
+  }
+
+  if (idx > 0){
+    out << "\n";
+    assist(out, start, description, idx - 1);
+  }
+  return out;
+}
+
 void Shell::line() {
   _cursor.column(_column);
   auto matched = _store.parse(_line, _out, false);
@@ -155,7 +204,7 @@ void Shell::line() {
           _out << Color::Magenta;
           break;
         case Segment::Type::String:
-          _out << Color::BoldBlue;
+          _out << Mode::Bold << Color::Blue;
           break;
         default:
           _out << Color::Yellow;
@@ -166,6 +215,33 @@ void Shell::line() {
     if (it != view.end()){
       _out << view.substr(it - view.begin());
     }
+
+    // Assistive (description)
+    _cursor.save();
+    auto column = _cursor.position().x;
+
+    auto segments = matched.segments.size();
+    stringstream block;
+    assist(block, view.begin(), matched, segments);
+
+    auto lastLine{false};
+
+    string line;
+    while (getline(block, line)){
+      _cursor.forceDown();
+      lastLine |= _cursor.max().y == _cursor.position().y;
+      _cursor.column(_column);
+      _out << line << Color::Reset << Erase::CursorToEnd;
+    }
+
+    if (lastLine ){
+      _cursor.up(segments);
+      _cursor.column(column);
+    }else{
+      _out << "\n" << Erase::CursorToEnd;
+      _cursor.restore();
+    }
+
   }else{
     _out << Color::Red << _line << Color::Reset;
   }
@@ -182,15 +258,10 @@ void Shell::prompt() {
   // call Function "directly", instead of going through store
   _function.parse(":prompt", _out, true);
   _column = _cursor.position().x;
+
   _idx = 0;
 }
 
-void Shell::debug(unsigned ch, Cursor::Position position = Cursor::Position{1,1}) {
-  auto startPosition = _cursor.position();
-  _cursor.position(position);
-  _out << Color::Yellow << ch << Color::Reset << ' ';
-  _cursor.position(startPosition);
-}
 
 int Shell::run() {
   prompt();

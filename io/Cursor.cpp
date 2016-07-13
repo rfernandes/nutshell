@@ -12,6 +12,11 @@ void Cursor::down(unsigned rows) {
   cout << "\x1b[" << rows << 'B';
 }
 
+void Cursor::forceDown()
+{
+  cout << "\x1b" << "D";
+}
+
 void Cursor::left(unsigned columns) {
   cout << "\x1b[" << columns << 'D';
 }
@@ -22,6 +27,16 @@ void Cursor::right(unsigned columns) {
 
 void Cursor::position(Cursor::Position position) {
   cout << "\x1b[" << position.y << ';' << position.x  << 'H';
+}
+
+void Cursor::save()
+{
+  cout << "\x1b[s";
+}
+
+void Cursor::restore()
+{
+  cout << "\x1b[u";
 }
 
 Cursor::Position Cursor::max() {

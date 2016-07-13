@@ -18,9 +18,6 @@ public:
 
   int run();
   void line();
-  void debug(unsigned ch, Cursor::Position pos);
-
-  void line() const;
 
 private:
 
