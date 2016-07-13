@@ -18,9 +18,6 @@ public:
 
   int run();
   void line();
-  void debug(unsigned ch, Cursor::Position pos);
-
-  void line() const;
 
 private:
 
@@ -42,6 +39,11 @@ private:
   short _utf8Bytes;
 
   Command* _match;
+
+  // Features
+  bool _predictive;
+  bool _assistive;
+
 };
 
 #endif

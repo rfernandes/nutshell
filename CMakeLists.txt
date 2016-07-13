@@ -23,6 +23,7 @@ main.cpp
 shell/History.cpp
 shell/Path.cpp
 shell/Shell.cpp
+shell/Utils.cpp
 )
 
 find_package(Boost COMPONENTS system REQUIRED QUIET)

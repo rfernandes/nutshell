@@ -45,6 +45,9 @@ namespace {
 }
 
 Input::Input() {
+  std::ios_base::sync_with_stdio(false);
+
+
   tcgetattr(STDIN_FILENO, &oldt);
   newt = oldt;
   newt.c_lflag &= ~(ICANON | ECHO);

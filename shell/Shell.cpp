@@ -2,6 +2,7 @@
 
 #include <command/Command.h>
 #include <shell/History.h>
+#include <shell/Utils.h>
 
 #include <algorithm>
 #include <experimental/string_view>
@@ -10,31 +11,6 @@
 using namespace std;
 using namespace std::experimental;
 using namespace manip;
-
-
-namespace {
-
-  inline bool is_utf8(char bute){
-    return (bute & 0xc0) != 0x80;
-  }
-
-  inline short utf8_bytes(char ch){
-    return (ch & 0b100'00000) == 0b0000'0000 ? 1:
-           (ch & 0b111'00000) == 0b1100'0000 ? 2:
-           (ch & 0b111'10000) == 0b1110'0000 ? 3:
-           (ch & 0b111'11000) == 0b1111'0000 ? 4: 0;
-  }
-
-  //TODO: Move to Utils
-  size_t utf8_size(const std::string& str){
-    return count_if(str.begin(), str.end(), is_utf8);
-  }
-
-  /// Returns the utf8 codepoint of byte position idx
-  size_t utf8_idx(const std::string& str, unsigned idx){
-    return count_if(str.begin(), str.begin() + idx, is_utf8);
-  }
-}
 
 class BuiltIn: public Command
 {
@@ -92,6 +68,8 @@ Shell::Shell()
 , _exit{false}
 , _utf8Bytes{0}
 , _match{nullptr}
+, _predictive{true}
+, _assistive{false}
 {
   setlocale(LC_ALL, "");
 
@@ -119,6 +97,20 @@ Shell::Shell()
                                  return Status::Ok;
                                });
 
+  // Toggle predictive functionality
+  CommandStore::store<BuiltIn>(":predictive",
+                               [&](const Line& /*line*/, Output& /*output*/){
+                                 _predictive = !_predictive;
+                                 return Status::Ok;
+                               });
+
+  // Toggle assistive functionality
+  CommandStore::store<BuiltIn>(":assistive",
+                               [&](const Line& /*line*/, Output& /*output*/){
+                                 _assistive = !_assistive;
+                                 return Status::Ok;
+                               });
+
   // Source ~/nutshellrc
   ifstream config{_cd.home() / ".nutshellrc"};
   if (config) {
@@ -129,11 +121,59 @@ Shell::Shell()
   }
 }
 
+/* FIXME: Perhaps Line should be included in Description
+*  TODO:
+*    Cleanup single suggestion when deleting last match
+*    Clear &/Pad when executed
+*    Compact view (maximise line information)
+*/
+ostream & assist(ostream &out, const Suggestion::const_iterator &start, const Description &description, size_t idx){
+  auto it = start;
+  for (size_t i = 0; i < idx; ++i) {
+    const auto &segment = description.segments.at(i);
+    const auto start = distance(it, segment.view.begin());
+    it = segment.view.begin();
+    fill_n(ostreambuf_iterator<char>(out), start, ' ');
+    if (i + 1 == idx){
+
+      switch (segment.type){
+        case Segment::Type::Builtin:
+          out << Color::Cyan;
+          break;
+        case Segment::Type::Command:
+          out << Color::Green;
+          break;
+        case Segment::Type::Parameter:
+          out << Color::Blue;
+          break;
+        case Segment::Type::Argument:
+          out << Color::Magenta;
+          break;
+        case Segment::Type::String:
+          out << Mode::Bold << Color::Blue;
+          break;
+        default:
+          out << Color::Yellow;
+      }
+      out << "╰╸last";
+    }else{
+      out << "│" << Color::Reset;
+      ++it;
+    }
+  }
+
+  if (idx > 0){
+    out << "\n";
+    assist(out, start, description, idx - 1);
+  }
+  return out;
+}
+
 void Shell::line() {
   _cursor.column(_column);
   auto matched = _store.parse(_line, _out, false);
   if (matched.status != Status::NoMatch){
-    const auto view = string_view(_line);
+    const auto view = string_view{_line};
     auto it = view.begin();
     for (const auto& segment: matched.segments){
       if (it != segment.view.begin()){
@@ -155,7 +195,7 @@ void Shell::line() {
           _out << Color::Magenta;
           break;
         case Segment::Type::String:
-          _out << Color::BoldBlue;
+          _out << Mode::Bold << Color::Blue;
           break;
         default:
           _out << Color::Yellow;
@@ -166,31 +206,57 @@ void Shell::line() {
     if (it != view.end()){
       _out << view.substr(it - view.begin());
     }
+
+    // Assistive (description)
+    if (_assistive){
+      _cursor.save();
+      auto column = _cursor.position().x;
+
+      auto segments = matched.segments.size();
+      stringstream block;
+      assist(block, view.begin(), matched, segments);
+
+      auto lastLine{false};
+
+      string line;
+      while (getline(block, line)){
+        _cursor.forceDown();
+        lastLine |= _cursor.max().y == _cursor.position().y;
+        _cursor.column(_column);
+        _out << line << Color::Reset << Erase::CursorToEnd;
+      }
+
+      if (lastLine ){
+        _cursor.up(segments);
+        _cursor.column(column);
+      }else{
+        _out << "\n" << Erase::CursorToEnd;
+        _cursor.restore();
+      }
+    }
+
   }else{
     _out << Color::Red << _line << Color::Reset;
   }
 
   // Update suggestions
-  _suggestion = _historu.suggest(_line);
-  if (!_suggestion.empty()){
-    _out << _suggestion.substr(_line.size()) << Color::Reset;
+  if (_predictive){
+    _suggestion = _historu.suggest(_line);
+    if (!_suggestion.empty()){
+      _out << _suggestion.substr(_line.size()) << Color::Reset;
+    }
+    _out << Erase::CursorToEnd;
   }
-  _out << Erase::CursorToEnd;
 }
 
 void Shell::prompt() {
   // call Function "directly", instead of going through store
   _function.parse(":prompt", _out, true);
   _column = _cursor.position().x;
+
   _idx = 0;
 }
 
-void Shell::debug(unsigned ch, Cursor::Position position = Cursor::Position{1,1}) {
-  auto startPosition = _cursor.position();
-  _cursor.position(position);
-  _out << Color::Yellow << ch << Color::Reset << ' ';
-  _cursor.position(startPosition);
-}
 
 int Shell::run() {
   prompt();
@@ -246,36 +312,36 @@ int Shell::run() {
           break;
         }
         _cursor.left();
-        while (!is_utf8(_line[--_idx])){};
+        while (!utf8::is_utf8(_line[--_idx])){};
       case Input::Delete: {
-        _line.erase(_idx, utf8_bytes(_line[_idx]));
+        _line.erase(_idx, utf8::bytes(_line[_idx]));
         line();
-        _cursor.column(utf8_idx(_line, _idx) + _column);
+        _cursor.column(utf8::idx(_line, _idx) + _column);
         break;
       }
       case Input::Left:
         if (_idx > 0){
           _cursor.left();
-          while (!is_utf8(_line[--_idx])){}
+          while (!utf8::is_utf8(_line[--_idx])){}
         }
         break;
       case Input::Right:
         if (_line[_idx]){
           _cursor.right();
-          _idx += utf8_bytes(_line[_idx]);;
+          _idx += utf8::bytes(_line[_idx]);;
         }
         break;
       case Input::Up:
       case Input::Down: {
         _line = keystroke == Input::Down ? _historu.forward(_line) : _historu.backward(_line);
         line();
-        _idx = utf8_size(_line);
+        _idx = utf8::size(_line);
         break;
       }
       case Input::Home:
       case Input::End:
         _idx = _line.size();
-        _cursor.column(keystroke == Input::Home ? _column: _column + utf8_size(_line));
+        _cursor.column(keystroke == Input::Home ? _column: _column + utf8::size(_line));
         break;
       case 18: //Ctrl-R
         _out << "History interactive mode unimplemented\n";
@@ -290,7 +356,7 @@ int Shell::run() {
         if (_idx != 0) ++_idx;
         _line.erase(_idx, start - _idx);
         line();
-        _cursor.column(utf8_idx(_line, _idx) + _column);
+        _cursor.column(utf8::idx(_line, _idx) + _column);
         break;
       }
       case 4: //Ctrl-D
@@ -305,11 +371,11 @@ int Shell::run() {
         }
         _line.insert(_idx++, 1, keystroke);
         if (!_utf8Bytes){
-          _utf8Bytes += utf8_bytes(keystroke);
+          _utf8Bytes += utf8::bytes(keystroke);
         }
         if (!--_utf8Bytes){
           line();
-          _cursor.column(utf8_idx(_line, _idx) + _column);
+          _cursor.column(utf8::idx(_line, _idx) + _column);
         }
         break;
       }
