@@ -51,7 +51,7 @@ private:
 
 Shell::Shell()
 : _store{CommandStore::instance()}
-, _historu{CommandStore::store<History>()}
+, _history{CommandStore::store<History>()}
 , _out{cout}
 , _cd{CommandStore::store<Cd>()}
 , _function{
@@ -241,7 +241,7 @@ void Shell::line() {
 
   // Update suggestions
   if (_predictive){
-    _suggestion = _historu.suggest(_line);
+    _suggestion = _history.suggest(_line);
     if (!_suggestion.empty()){
       _out << _suggestion.substr(_line.size()) << Color::Reset;
     }
@@ -277,6 +277,7 @@ int Shell::run() {
         buffer += _line;
 
         if (!buffer.empty()) {
+          const auto startTime = std::chrono::system_clock::now();
           try{
             const Description executionResult {
               _match ? _match->parse(buffer, _out, true)
@@ -299,7 +300,8 @@ int Shell::run() {
           } catch (exception& ex) {
             _out << "Error " << ex.what() << "\n";
           }
-          _historu.add(buffer);
+          const auto endTime = std::chrono::system_clock::now();
+          _history.add({buffer, 0, startTime, endTime});
           buffer.clear();
           _line.clear();
           _suggestion = Suggestion{};
@@ -333,7 +335,7 @@ int Shell::run() {
         break;
       case Input::Up:
       case Input::Down: {
-        _line = keystroke == Input::Down ? _historu.forward(_line) : _historu.backward(_line);
+        _line = keystroke == Input::Down ? _history.forward(_line) : _history.backward(_line);
         line();
         _idx = utf8::size(_line);
         break;

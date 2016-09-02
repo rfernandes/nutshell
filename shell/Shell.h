@@ -25,7 +25,7 @@ private:
 
   Line _line;
   CommandStore& _store;
-  History& _historu;
+  History& _history;
   Suggestion _suggestion;
   Input _in;
   Output& _out;

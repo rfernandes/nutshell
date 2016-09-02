@@ -5,6 +5,9 @@
 #include <boost/spirit/home/x3.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
 
+#include <chrono>
+#include <iomanip>
+
 #include <pwd.h>
 
 using namespace std;
@@ -82,7 +85,10 @@ class Visitor {
     void operator()(const ast::list&) const {
       auto &list = _history.list();
       for (size_t idx=0; idx< list.size(); ++idx){
-        _out << idx << ' ' << list[idx] << "\n";
+        const auto entry = list.at(idx);
+        const auto start = std::chrono::system_clock::to_time_t(entry.startTime);
+        const auto end = std::chrono::system_clock::to_time_t(entry.endTime);
+        _out << idx << ' ' << entry.line << " " << put_time(localtime(&start), "%F %T") << " " << put_time(localtime(&end), "%F %T") << "\n";
       }
     }
 
@@ -108,21 +114,21 @@ History::History()
 History::~History() = default;
 
 
-void History::add(const Line& command) {
-  _history.emplace_back(command);
+void History::add(const Entry& entry) {
+  _history.push_back(entry);
   _idx = _history.end();
 }
 
 const Line& History::forward(const Line& current) {
   return _idx < _history.end()
-    ? _idx + 1 == _history.end() ? empty: *++_idx
-    : _history.empty() ? current: _history.back();
+    ? _idx + 1 == _history.end() ? empty: (++_idx)->line
+    : _history.empty() ? current: _history.back().line;
 }
 
 const Line& History::backward(const Line& current) {
   return _idx > _history.begin()
-    ? *--_idx
-    : _history.empty() ? current: _history.front();
+    ? (--_idx)->line
+    : _history.empty() ? current: _history.front().line;
 }
 
 void History::clear() {
@@ -130,7 +136,7 @@ void History::clear() {
   _idx = _history.end();
 }
 
-const std::vector<Line>& History::list() const {
+const std::vector<History::Entry>& History::list() const {
   return _history;
 }
 
@@ -138,8 +144,8 @@ string_view History::suggest(const Line& line) const {
   string_view ret;
   if (!line.empty()){
     for (const auto& item: _history){
-      if (item.compare(0, line.length(), line) == 0) {
-        ret = item;
+      if (item.line.compare(0, line.length(), line) == 0) {
+        ret = item.line;
       }
     }
   }
