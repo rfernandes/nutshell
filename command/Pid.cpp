@@ -135,7 +135,8 @@ namespace {
 
     void operator()(const ast::wait& /*function*/) const {
       _out << "waiting : " << _pid << "\n";
-      ::wait(const_cast<unsigned*>(&_pid));
+      int pid = _pid; //FIXME: Narrowing
+      ::wait(&pid);
     }
 
     void operator()(const ast::cwd&) const {
