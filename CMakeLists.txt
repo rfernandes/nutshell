@@ -9,6 +9,7 @@ add_definitions(
 )
 
 add_executable(nutshell
+command/BuiltIn.cpp
 command/Command.cpp
 command/Directory.cpp
 command/Executable.cpp
@@ -22,8 +23,11 @@ io/Output.cpp
 main.cpp
 shell/History.cpp
 shell/Path.cpp
+shell/Assistive.cpp
+shell/Predictive.cpp
 shell/Shell.cpp
 shell/Utils.cpp
+shell/Module.cpp
 )
 
 find_package(Boost COMPONENTS system REQUIRED QUIET)

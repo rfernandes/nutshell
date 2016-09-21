@@ -1,5 +1,6 @@
 #include "Directory.h"
 
+#include <command/BuiltIn.h>
 #include <command/Parser.h>
 
 #include <boost/spirit/home/x3.hpp>
@@ -104,6 +105,11 @@ Cd::Cd()
 , _history(1, _current)
 , _idx{0}
 {
+  CommandStore::store<BuiltIn>(":cwd",
+                               [this](const Line& /*line*/, Output& output){
+                                 output << cwd().string();
+                                 return Status::Ok;
+                               });
 }
 
 Description Cd::parse(const Line& line, Output& /*output*/, bool execute){

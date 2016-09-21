@@ -15,6 +15,20 @@ using namespace std::experimental;
 namespace x3 = boost::spirit::x3;
 
 namespace {
+  auto &history = ModuleStore::store<History>();
+
+  class HistoryCommand: public Command{
+    History &_history;
+  public:
+    HistoryCommand(History &history)
+    : _history{history}
+    {}
+
+    Description parse(const Line & line, Output & output, bool execute) override;
+  };
+
+  auto &historyCommand = CommandStore::store<HistoryCommand>(history);
+
   namespace ast {
     struct list{};
     struct clear{};
@@ -152,7 +166,7 @@ string_view History::suggest(const Line& line) const {
   return ret;
 }
 
-Description History::parse(const Line& line, Output& output, bool execute){
+Description HistoryCommand::parse(const Line& line, Output& output, bool execute){
   auto iter = line.begin();
   auto endIter = line.end();
 
@@ -167,9 +181,40 @@ Description History::parse(const Line& line, Output& output, bool execute){
     desc.status = Status::Ok;
 
     if (execute){
-      boost::apply_visitor(Visitor{*this, output}, data);
+      boost::apply_visitor(Visitor{_history, output}, data);
     }
   }
 
   return desc;
+}
+
+void History::lineUpdated(const Description& description, Shell& shell){
+}
+
+void History::commandExecute(const Line& /*line*/, Shell& /*shell*/){
+  _startTime = std::chrono::system_clock::now();
+}
+
+void History::commandExecuted(const Description& /*description*/, Shell& shell){
+  const auto endTime = std::chrono::system_clock::now();
+  // FIXME: Capture correct return status
+  const Entry entry{shell.line(), 0, _startTime, endTime};
+  add(entry);
+}
+
+bool History::keyPress(unsigned int keystroke, Shell& shell){
+  switch (keystroke){
+    case Input::Up:
+    case Input::Down: {
+      const auto& line = shell.line();
+      const auto& newLine = keystroke == Input::Down ? forward(line) : backward(line);
+      shell.line(newLine);
+      shell.displayLine();
+      return true;
+    }
+    case 18: //Ctrl-R
+      cout << "History interactive mode unimplemented\n";
+      return true;
+  }
+  return false;
 }
