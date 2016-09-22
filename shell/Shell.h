@@ -17,16 +17,21 @@ public:
   Shell();
 
   int run();
-  void line();
+
+  void executeCommand(const Line& line);
+  void displayLine();
+  const Line& line() const;
+  void line(const Line& line);
+
+  void output(std::istream& string);
 
 private:
 
   void prompt();
 
   Line _line;
+  Line _buffer;
   CommandStore& _store;
-  History& _history;
-  Suggestion _suggestion;
   Input _in;
   Output& _out;
   Cursor _cursor;
@@ -39,11 +44,6 @@ private:
   short _utf8Bytes;
 
   Command* _match;
-
-  // Features
-  bool _predictive;
-  bool _assistive;
-
 };
 
 #endif
