@@ -8,7 +8,7 @@ using namespace std;
 namespace fs = std::experimental::filesystem;
 
 Path::Path()
-: _path{"/bin", "/usr/bin"}
+: _path{"/usr/local/sbin", "/usr/local/bin", "/usr/bin"}
 {
   set<string> cache;
   for (const auto& dir: _path) {

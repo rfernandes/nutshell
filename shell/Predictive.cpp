@@ -23,20 +23,15 @@ Predictive::Predictive(History& history)
                               });
 }
 
-void Predictive::commandExecute(const Line& /*line*/, Shell& /*shell*/){
-}
-
-void Predictive::commandExecuted(const Description& /*description*/, Shell& /*shell*/){
-}
-
 void Predictive::lineUpdated(const Description& /*description*/, Shell& shell){
+  auto &out = shell.out();
+
   if (_active){
      _suggestion = _history.suggest(shell.line());
     if (!_suggestion.empty()){
-      //FIXME : call out on shell, instead of using cout
-      cout << _suggestion.substr(shell.line().size()) << Color::Reset;
+      out << _suggestion.substr(shell.line().size()) << Color::Reset;
     }
-    cout << Erase::CursorToEnd;
+    out << Erase::CursorToEnd;
   }
 }
 

@@ -188,9 +188,6 @@ Description HistoryCommand::parse(const Line& line, Output& output, bool execute
   return desc;
 }
 
-void History::lineUpdated(const Description& description, Shell& shell){
-}
-
 void History::commandExecute(const Line& /*line*/, Shell& /*shell*/){
   _startTime = std::chrono::system_clock::now();
 }

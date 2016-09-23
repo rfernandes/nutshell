@@ -71,51 +71,46 @@ Assistive::Assistive()
                               });
 }
 
-void Assistive::commandExecute(const Line& /*line*/, Shell& /*shell*/){
-}
-
-void Assistive::commandExecuted(const Description& description, Shell& /*shell*/){
-}
-
 void Assistive::lineUpdated(const Description& description, Shell& shell){
   const auto view = string_view{shell.line()};
+  auto& out = shell.out();
 
   switch (description.status){
     case Status::NoMatch:
-      cout << Color::Red << view << Color::Reset;
+      out << Color::Red << view << Color::Reset;
       break;
     default:{
       auto it = view.begin();
       for (const auto& segment: description.segments){
         if (it != segment.view.begin()){
-          cout << view.substr(it - view.begin(), distance(it, segment.view.begin()));
+          out << view.substr(it - view.begin(), distance(it, segment.view.begin()));
         }
         it = segment.view.end();
 
         switch (segment.type){
           case Segment::Type::Builtin:
-            cout << Color::Cyan;
+            out << Color::Cyan;
             break;
           case Segment::Type::Command:
-            cout << Color::Green;
+            out << Color::Green;
             break;
           case Segment::Type::Parameter:
-            cout << Color::Blue;
+            out << Color::Blue;
             break;
           case Segment::Type::Argument:
-            cout << Color::Magenta;
+            out << Color::Magenta;
             break;
           case Segment::Type::String:
-            cout << Mode::Bold << Color::Blue;
+            out << Mode::Bold << Color::Blue;
             break;
           default:
-            cout << Color::Yellow;
+            out << Color::Yellow;
         }
-        cout << segment.view;
+        out << segment.view;
       }
-      cout << Color::Reset;
+      out << Color::Reset;
       if (it != view.end()){
-        cout << view.substr(it - view.begin());
+        out << view.substr(it - view.begin());
       }
       break;
     }
@@ -130,10 +125,6 @@ void Assistive::lineUpdated(const Description& description, Shell& shell){
 
     shell.output(block);
   }
-}
-
-bool Assistive::keyPress(unsigned int keystroke, Shell& shell){
-  return false;
 }
 
 bool Assistive::toggle(){

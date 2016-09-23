@@ -3,6 +3,20 @@
 Module::~Module(){
 }
 
+void Module::commandExecute(const Line& /*line*/, Shell& /*shell*/){
+}
+
+void Module::commandExecuted(const Description& /*description*/, Shell& /*shell*/){
+}
+
+bool Module::keyPress(unsigned int /*keystroke*/, Shell& /*shell*/){
+  return false;
+}
+
+void Module::lineUpdated(const Description& /*description*/, Shell& /*shell*/){
+}
+
+
 ModuleStore& ModuleStore::instance(){
   static ModuleStore store;
   return store;

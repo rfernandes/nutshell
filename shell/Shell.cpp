@@ -153,7 +153,6 @@ int Shell::run() {
     switch (keystroke) {
       case '\n':
         executeCommand(_line);
-
         break;
       case Input::Backspace:
       case '\b': // Ctrl-H
@@ -221,6 +220,10 @@ int Shell::run() {
     }
   }
   return 0;
+}
+
+std::ostream & Shell::out(){
+  return _out;
 }
 
 void Shell::output(istream& in){

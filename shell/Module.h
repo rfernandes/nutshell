@@ -9,10 +9,10 @@
 class Module{
 public:
   virtual ~Module() = 0;
-  virtual bool keyPress(unsigned keystroke, Shell& shell) = 0;
-  virtual void lineUpdated(const Description& description, Shell& shell) = 0;
-  virtual void commandExecute(const Line& line, Shell& shell) = 0;
-  virtual void commandExecuted(const Description& description, Shell& shell) = 0;
+  virtual bool keyPress(unsigned keystroke, Shell& shell);
+  virtual void lineUpdated(const Description& description, Shell& shell);
+  virtual void commandExecute(const Line& line, Shell& shell);
+  virtual void commandExecuted(const Description& description, Shell& shell);
 };
 
 class Dependency

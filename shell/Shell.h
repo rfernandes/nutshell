@@ -25,6 +25,8 @@ public:
 
   void output(std::istream& string);
 
+  std::ostream& out();
+
 private:
 
   void prompt();
