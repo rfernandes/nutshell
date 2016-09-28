@@ -108,7 +108,7 @@ void Assistive::lineUpdated(const Description& description, Shell& shell){
         }
         out << segment.view;
       }
-      out << Color::Reset;
+      out << Mode::Normal << Color::Reset;
       if (it != view.end()){
         out << view.substr(it - view.begin());
       }

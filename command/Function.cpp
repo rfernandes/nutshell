@@ -41,7 +41,7 @@ namespace {
   const name_type name = "name";
   const command_type command = "command";
 
-  auto assign_def = '{' >> *(~x3::char_('}')) >> -('}' >> x3::attr(bool{true}));
+  auto assign_def = '{' >> x3::lexeme[ *(~x3::char_('}')) ] >> -('}' >> x3::attr(bool{true}));
   auto name_def = x3::lexeme[ -x3::char_(":") >>  x3::alpha >> *(x3::alnum | x3::char_("_-")) ];
   auto command_def = name >> -assign;
 
@@ -59,8 +59,8 @@ namespace {
   };
 }
 
-Function::Function(unordered_map<string, string> functions)
-: _functions{functions}
+Function::Function(Functions functions)
+: _functions{move(functions)}
 {}
 
 Description Function::parse(const Line& line, Output& output, bool execute){
@@ -85,9 +85,10 @@ Description Function::parse(const Line& line, Output& output, bool execute){
       if (data.content){
         if (data.content.get().finished){
           _functions[data.name] = data.content.get().content;
+        }else{
+          desc.status = Status::Incomplete;
         }
       }else{
-        // Assured
         // TODO: assign through semantic action so we don't have to loopup twice
         const auto& function = _functions.at(data.name);
         stringstream functionBody{function};
