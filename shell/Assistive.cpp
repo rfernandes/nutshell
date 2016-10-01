@@ -21,7 +21,7 @@ namespace {
   ostream & assist(ostream &out, const Suggestion::const_iterator &start, const Description &description, size_t idx){
     auto it = start;
     for (size_t i = 0; i < idx; ++i) {
-      const auto &segment = description.segments.at(i);
+      const auto &segment = description.segments().at(i);
       const auto start = distance(it, segment.view.begin());
       it = segment.view.begin();
       fill_n(ostreambuf_iterator<char>(out), start, ' ');
@@ -75,13 +75,13 @@ void Assistive::lineUpdated(const Description& description, Shell& shell){
   const auto view = string_view{shell.line()};
   auto& out = shell.out();
 
-  switch (description.status){
+  switch (description.status()){
     case Status::NoMatch:
       out << Color::Red << view << Color::Reset;
       break;
     default:{
       auto it = view.begin();
-      for (const auto& segment: description.segments){
+      for (const auto& segment: description.segments()){
         if (it != segment.view.begin()){
           out << view.substr(it - view.begin(), distance(it, segment.view.begin()));
         }
@@ -118,7 +118,7 @@ void Assistive::lineUpdated(const Description& description, Shell& shell){
 
    // Assistive (description)
   if (_active){
-    auto segments = description.segments.size();
+    auto segments = description.segments().size();
     stringstream block;
 
     assist(block, view.begin(), description, segments);

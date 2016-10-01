@@ -136,7 +136,7 @@ Description Executable::parse(const Line& line, Output& output, bool execute){
   auto iter = line.begin();
   const auto& endIter = line.end();
 
-  Description desc;
+  Description desc{line};
   const auto parser = x3::with<Description>(ref(desc))[
                         x3::with<Line>(ref(line))[command]];
 
@@ -148,7 +148,7 @@ Description Executable::parse(const Line& line, Output& output, bool execute){
   };
 
   if (ok){
-    desc.status = Status::Ok;
+    desc.status(Status::Ok);
 
     if (execute){
       launch(data, output);

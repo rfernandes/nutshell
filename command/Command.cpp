@@ -15,13 +15,37 @@ CommandStore& CommandStore::instance() {
 }
 
 Description CommandStore::parse(const Line& line, Output& output, bool execute) {
-  Description desc;
+  Description descDefault{line};
   for (const auto& command: _commands) {
-    desc = command->parse(line, output, execute);
-    if (desc.status != Status::NoMatch){
-      break;
+    Description descResult {command->parse(line, output, execute)};
+    if (descResult.status() != Status::NoMatch){
+      return descResult;
     }
   }
-  return desc;
+  return descDefault;
 }
 
+Description::Description(const Line& line)
+: _status{Status::NoMatch}
+, _line{line}
+{}
+
+const Line& Description::line() const{
+  return _line;
+}
+
+const std::vector<Segment>& Description::segments() const{
+  return _segments;
+}
+
+std::vector<Segment>& Description::segments(){
+  return _segments;
+}
+
+Status Description::status() const{
+  return _status;
+}
+
+void Description::status(Status status){
+  _status = status;
+}

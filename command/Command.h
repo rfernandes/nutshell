@@ -25,9 +25,21 @@ struct Segment{
   std::experimental::string_view view;
 };
 
-struct Description{
-  Status status {Status::NoMatch};
-  std::vector<Segment> segments;
+class Description{
+  Status _status;
+  const Line& _line;
+  std::vector<Segment> _segments;
+
+public:
+  Description(const Line& line);
+
+  const Line& line() const;
+
+  Status status() const;
+  void status(Status status);
+
+  const std::vector<Segment>& segments() const;
+  std::vector<Segment>& segments();
 };
 
 class Command {

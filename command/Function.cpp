@@ -67,9 +67,8 @@ Description Function::parse(const Line& line, Output& output, bool execute){
   auto iter = line.begin();
   const auto& endIter = line.end();
 
-  Description desc;
-  const auto parser = x3::with<Description>(ref(desc))[
-                        x3::with<Line>(ref(line))[command]];
+  Description desc{line};
+  const auto parser = x3::with<Description>(ref(desc))[command];
 
   using namespace std::placeholders;
   auto matcher = [&](auto &ctx){
@@ -80,13 +79,13 @@ Description Function::parse(const Line& line, Output& output, bool execute){
   bool ok {x3::phrase_parse(iter, endIter, parser[matcher], x3::space, data)};
 
   if (ok) {
-    desc.status = Status::Ok;
+    desc.status(Status::Ok);
     if (execute){
       if (data.content){
         if (data.content.get().finished){
           _functions[data.name] = data.content.get().content;
         }else{
-          desc.status = Status::Incomplete;
+          desc.status(Status::Incomplete);
         }
       }else{
         // TODO: assign through semantic action so we don't have to loopup twice

@@ -90,7 +90,7 @@ void Shell::executeCommand(const Line& line){
         module->commandExecuted(executionResult, *this);
       }
 
-      switch (executionResult.status) {
+      switch (executionResult.status()) {
         case Status::Ok:
           break;
         case Status::NoMatch:

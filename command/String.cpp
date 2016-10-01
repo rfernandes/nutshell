@@ -49,15 +49,14 @@ Description String::parse(const Line& line, Output& output, bool execute){
   auto iter = line.begin();
   auto endIter = line.end();
 
-  Description desc;
-  const auto parser = x3::with<Description>(ref(desc))[
-                        x3::with<Line>(ref(line))[command]];
+  Description desc{line};
+  const auto parser = x3::with<Description>(ref(desc))[command];
 
   string data;
   const bool ok {x3::phrase_parse(iter, endIter, parser, x3::space, data)};
 
   if (ok) {
-    desc.status = Status::Ok;
+    desc.status(Status::Ok);
     if (execute) {
       output << data;
     }

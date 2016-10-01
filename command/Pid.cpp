@@ -152,9 +152,8 @@ Description Pid::parse(const Line& line, Output& output, bool execute) {
   auto iter = line.begin();
   auto endIter = line.end();
 
-  Description desc;
-  const auto parser = x3::with<Description>(ref(desc))[
-                        x3::with<Line>(ref(line))[command]];
+  Description desc{line};
+  const auto parser = x3::with<Description>(ref(desc))[command];
 
 
   ast::PidCommand data;
@@ -165,7 +164,7 @@ Description Pid::parse(const Line& line, Output& output, bool execute) {
   const unsigned pid = data.pid ? boost::apply_visitor(PidVisitor{}, data.pid.get())
                                 : getpid();
 
-  desc.status = Status::Ok;
+  desc.status(Status::Ok);
 
   if (execute) {
     if (data.function) {

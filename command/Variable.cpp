@@ -157,9 +157,8 @@ Description Variable::parse(const Line& line, Output& output, bool execute){
   auto endIter = line.end();
 
   ast::Variables data;
-  Description desc;
-  const auto parser = x3::with<Description>(ref(desc))[
-                        x3::with<Line>(ref(line))[command]];
+  Description desc{line};
+  const auto parser = x3::with<Description>(ref(desc))[command];
 
   auto matcher = [&](auto &ctx){
     return match_name(ctx, _variables);
@@ -168,7 +167,7 @@ Description Variable::parse(const Line& line, Output& output, bool execute){
   const bool ok {x3::phrase_parse(iter, endIter, parser[matcher], x3::space, data)};
 
   if (ok){
-    desc.status = Status::Ok;
+    desc.status(Status::Ok);
     if (execute){
       VariableVisitor visitor{*this, output};
       boost::apply_visitor(visitor, data);
