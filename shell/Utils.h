@@ -9,7 +9,7 @@ namespace utf8{
     return (byte & 0xc0) != 0x80;
   }
 
-  constexpr short bytes(char ch) noexcept{
+  constexpr unsigned short bytes(char ch) noexcept{
     return (ch & 0b100'00000) == 0b0000'0000 ? 1:
            (ch & 0b111'00000) == 0b1100'0000 ? 2:
            (ch & 0b111'10000) == 0b1110'0000 ? 3:

@@ -30,7 +30,6 @@ Shell::Shell()
       "\"feed: \""}
     })}
 , _exit{false}
-, _utf8Bytes{0}
 {
   setlocale(LC_ALL, "");
 
@@ -136,7 +135,17 @@ int Shell::run() {
   Line buffer;
 
   unsigned keystroke;
+  unsigned short utf8Bytes{0};
   while (!_exit && (keystroke = _in.get())) {
+
+    // Parse utf codepoints first, so visitors only get whole chars
+    if (!utf8Bytes){
+      utf8Bytes += utf8::bytes(keystroke);
+    }
+    if (--utf8Bytes){
+      _line.insert(_idx++, 1, keystroke);
+      continue;
+    }
 
     bool handledKey{false};
     for (auto &module: ModuleStore::modules()){
@@ -208,13 +217,8 @@ int Shell::run() {
           continue;
         }
         _line.insert(_idx++, 1, keystroke);
-        if (!_utf8Bytes){
-          _utf8Bytes += utf8::bytes(keystroke);
-        }
-        if (!--_utf8Bytes){
-          displayLine();
-          _cursor.column(utf8::idx(_line, _idx) + _column);
-        }
+        displayLine();
+        _cursor.column(utf8::idx(_line, _idx) + _column);
         break;
       }
     }
