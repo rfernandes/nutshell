@@ -15,7 +15,8 @@ using namespace std::experimental;
 using namespace manip;
 
 Shell::Shell()
-: _store{CommandStore::instance()}
+: _commands{CommandStore::instance()}
+, _modules{ModuleStore::instance()}
 , _out{cout}
 , _cd{CommandStore::store<Cd>()}
 , _function{
@@ -51,14 +52,14 @@ Shell::Shell()
                                  return Status::Ok;
                                });
 
-  ModuleStore::instance().initialize();
+  _modules.initialize();
 
   // Source ~/nutshellrc
   ifstream config{_cd.home() / ".nutshellrc"};
   if (config) {
     string command;
     while (getline(config, command)) {
-      _store.parse(command, _out, true);
+      _commands.parse(command, _out, true);
     }
   }
 }
@@ -77,17 +78,13 @@ void Shell::executeCommand(const Line& line){
   _buffer += line;
 
   if (!_buffer.empty()) {
-    for (auto &module: ModuleStore::modules()){
-      module->commandExecute(_buffer, *this);
-    }
+    _modules.commandExecute(line, *this);
 
     try{
       const Description executionResult {
-        _store.parse(_buffer, _out, true)};
+        _commands.parse(_buffer, _out, true)};
 
-      for (auto &module: ModuleStore::modules()){
-        module->commandExecuted(executionResult, *this);
-      }
+      _modules.commandExecuted(executionResult, *this);
 
       switch (executionResult.status()) {
         case Status::Ok:
@@ -115,10 +112,8 @@ void Shell::executeCommand(const Line& line){
 
 void Shell::displayLine() {
   _cursor.column(_column);
-  auto matched = _store.parse(_line, _out, false);
-  for (auto &module: ModuleStore::modules()){
-    module->lineUpdated(matched, *this);
-  }
+  auto matched = _commands.parse(_line, _out, false);
+  _modules.lineUpdated(matched, *this);
 }
 
 void Shell::prompt() {
@@ -147,13 +142,7 @@ int Shell::run() {
       continue;
     }
 
-    bool handledKey{false};
-    for (auto &module: ModuleStore::modules()){
-      if (module->keyPress(keystroke, *this)) {
-        handledKey = true;
-        break;
-      }
-    }
+    bool handledKey{_modules.keyPress(keystroke, *this)};
 
     if (handledKey){
       continue;
@@ -206,6 +195,9 @@ int Shell::run() {
         _cursor.column(utf8::idx(_line, _idx) + _column);
         break;
       }
+      case '\t': // Complete / suggest
+
+        break;
       case 4: //Ctrl-D
         _exit = true;
         break;

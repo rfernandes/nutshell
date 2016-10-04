@@ -50,7 +50,7 @@ public:
   virtual Description parse(const Line& line, Output& output, bool execute) = 0;
 };
 
-class CommandStore {
+class CommandStore : public Command{
 public:
 
   template<typename CommandT, typename ...Args>

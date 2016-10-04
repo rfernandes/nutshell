@@ -31,7 +31,7 @@ Description::Description(const Line& line)
 {}
 
 const Line& Description::line() const{
-  return _line;
+return _line;
 }
 
 const std::vector<Segment>& Description::segments() const{

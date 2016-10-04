@@ -10,6 +10,7 @@
 #include <shell/Line.h>
 
 class CommandStore;
+class ModuleStore;
 class History;
 
 class Shell {
@@ -33,7 +34,8 @@ private:
 
   Line _line;
   Line _buffer;
-  CommandStore& _store;
+  CommandStore& _commands;
+  ModuleStore& _modules;
   Input _in;
   Output& _out;
   Cursor _cursor;

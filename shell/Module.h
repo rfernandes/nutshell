@@ -27,7 +27,7 @@ public:
   bool initialize(Module &module) override;
 };
 
-class ModuleStore{
+class ModuleStore: public Module{
 public:
 
   template<typename ModuleT, typename ...Args>
@@ -49,6 +49,12 @@ public:
   static const Modules& modules();
 
   void initialize();
+
+  bool keyPress(unsigned int keystroke, Shell & shell) override;
+  void lineUpdated(const Description & description, Shell & shell) override;
+  void commandExecute(const Line & line, Shell & shell) override;
+  void commandExecuted(const Description & description, Shell & shell) override;
+
 private:
   static ModuleStore& instance();
   std::vector<std::unique_ptr<Dependency>> _dependency;
