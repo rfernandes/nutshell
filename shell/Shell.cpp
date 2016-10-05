@@ -114,6 +114,7 @@ void Shell::displayLine() {
   _cursor.column(_column);
   auto matched = _commands.parse(_line, _out, false);
   _modules.lineUpdated(matched, *this);
+  _cursor.column(utf8::idx(_line, _idx) + _column);
 }
 
 void Shell::prompt() {
@@ -162,7 +163,6 @@ int Shell::run() {
       case Input::Delete: {
         _line.erase(_idx, utf8::bytes(_line[_idx]));
         displayLine();
-        _cursor.column(utf8::idx(_line, _idx) + _column);
         break;
       }
       case Input::Left:
@@ -172,15 +172,18 @@ int Shell::run() {
         }
         break;
       case Input::Right:
-        if (_line[_idx]){
+        if (_line.size() > _idx){
           _cursor.right();
           _idx += utf8::bytes(_line[_idx]);;
         }
         break;
       case Input::Home:
+        _idx = 0;
+        _cursor.column(_column);
+        break;
       case Input::End:
         _idx = _line.size();
-        _cursor.column(keystroke == Input::Home ? _column: _column + utf8::size(_line));
+        _cursor.column(_column + utf8::size(_line));
         break;
       case 23:{ //Ctrl-W
         if (!_idx){
@@ -192,7 +195,6 @@ int Shell::run() {
         if (_idx != 0) ++_idx;
         _line.erase(_idx, start - _idx);
         displayLine();
-        _cursor.column(utf8::idx(_line, _idx) + _column);
         break;
       }
       case '\t': // Complete / suggest
@@ -210,7 +212,6 @@ int Shell::run() {
         }
         _line.insert(_idx++, 1, keystroke);
         displayLine();
-        _cursor.column(utf8::idx(_line, _idx) + _column);
         break;
       }
     }

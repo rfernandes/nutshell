@@ -14,7 +14,7 @@ Path::Path()
   for (const auto& dir: _path) {
     for (const auto& path: fs::directory_iterator{dir}) {
       if (static_cast<bool>(path.status().permissions() & fs::perms::others_exec)) {
-        cache.emplace(path.path().filename().string());
+        cache.emplace(path.path().filename().native());
       }
     }
   }

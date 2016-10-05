@@ -44,9 +44,7 @@ private:
   Function &_function;
   bool _exit;
   unsigned _column;
-  unsigned _idx;
-
-  Command* _match;
+  unsigned long _idx;
 };
 
 #endif
