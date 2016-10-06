@@ -18,13 +18,12 @@ namespace {
   *    Clear &/Pad when executed
   *    Compact view (maximise line information)
   */
-  ostream & assist(ostream &out, const Suggestion::const_iterator &start, const Description &description, size_t idx){
+  ostream & assist(ostream &out, const Line::const_iterator &start, const Description &description, size_t idx){
     auto it = start;
     for (size_t i = 0; i < idx; ++i) {
       const auto &segment = description.segments().at(i);
-      const auto start = distance(it, segment.view.begin());
-      it = segment.view.begin();
-      fill_n(ostreambuf_iterator<char>(out), start, ' ');
+      fill_n(ostreambuf_iterator<char>(out), distance(it, segment.begin), ' ');
+      it = segment.begin;
       if (i + 1 == idx){
         switch (segment.type){
           case Segment::Type::Builtin:
@@ -72,21 +71,20 @@ Assistive::Assistive()
 }
 
 void Assistive::lineUpdated(const Description& description, Shell& shell){
-  const auto view = string_view{shell.line()};
   auto& out = shell.out();
 
   switch (description.status()){
     case Status::NoMatch:
-      out << Color::Red << view << Color::Reset;
+      out << Color::Red << shell.line() << Color::Reset;
       break;
     default:{
-      auto it = view.begin();
-      for (const auto& segment: description.segments()){
-        if (it != segment.view.begin()){
-          out << view.substr(it - view.begin(), distance(it, segment.view.begin()));
-        }
-        it = segment.view.end();
+      auto it = shell.line().begin();
 
+      for (const auto& segment: description.segments()){
+        while (it != segment.begin){
+          out << *it;
+          ++it;
+        }
         switch (segment.type){
           case Segment::Type::Builtin:
             out << Color::Cyan;
@@ -106,11 +104,15 @@ void Assistive::lineUpdated(const Description& description, Shell& shell){
           default:
             out << Color::Yellow;
         }
-        out << segment.view;
+        while (it != segment.end){
+          out << *it;
+          ++it;
+        }
       }
       out << Mode::Normal << Color::Reset;
-      if (it != view.end()){
-        out << view.substr(it - view.begin());
+      while (it != shell.line().end()){
+        out << *it;
+        ++it;
       }
       break;
     }
@@ -121,7 +123,7 @@ void Assistive::lineUpdated(const Description& description, Shell& shell){
     auto segments = description.segments().size();
     stringstream block;
 
-    assist(block, view.begin(), description, segments);
+    assist(block, shell.line().begin(), description, segments);
 
     shell.output(block);
   }

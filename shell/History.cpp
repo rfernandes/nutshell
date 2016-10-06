@@ -170,7 +170,7 @@ Description HistoryCommand::parse(const Line& line, Output& output, bool execute
   auto iter = line.begin();
   auto endIter = line.end();
 
-  Description desc{line};
+  Description desc;
   const auto parser = x3::with<Description>(ref(desc))[command];
 
   ast::Command data;

@@ -17,23 +17,22 @@ enum class Status {
   Incomplete,       // Command requires additional input
 };
 
-std::experimental::string_view slice(const std::string& str, size_t start, size_t length);
-
 struct Segment{
   enum class Type{Command, Builtin, Function, Parameter, Argument, String};
   Type type;
-  std::experimental::string_view view;
+  std::string::const_iterator begin, end;
+
+  Segment(Type type,
+          std::string::const_iterator begin,
+          std::string::const_iterator end);
 };
 
 class Description{
   Status _status;
-  const Line& _line;
   std::vector<Segment> _segments;
 
 public:
-  Description(const Line& line);
-
-  const Line& line() const;
+  Description();
 
   Status status() const;
   void status(Status status);

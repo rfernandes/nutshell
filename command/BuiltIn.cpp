@@ -22,10 +22,10 @@ Description BuiltIn::parse(const Line& line, Output& output, bool execute) {
     _function(line, output);
   }
 
-  Description desc{line};
+  Description desc;
   if (matched){
     desc.status(Status::Ok);
-    desc.segments().push_back({Segment::Type::Builtin, string_view{line}});
+    desc.segments().emplace_back(Segment::Type::Builtin, line.begin(), line.end());
   }
 
   return desc;

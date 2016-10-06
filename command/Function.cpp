@@ -67,7 +67,7 @@ Description Function::parse(const Line& line, Output& output, bool execute){
   auto iter = line.begin();
   const auto& endIter = line.end();
 
-  Description desc{line};
+  Description desc;
   const auto parser = x3::with<Description>(ref(desc))[command];
 
   using namespace std::placeholders;

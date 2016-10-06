@@ -157,7 +157,7 @@ Description Variable::parse(const Line& line, Output& output, bool execute){
   auto endIter = line.end();
 
   ast::Variables data;
-  Description desc{line};
+  Description desc;
   const auto parser = x3::with<Description>(ref(desc))[command];
 
   auto matcher = [&](auto &ctx){

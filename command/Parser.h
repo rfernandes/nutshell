@@ -20,8 +20,7 @@ namespace parser
                            Ast& /*ast*/,
                            Context const& context){
       auto& desc = boost::spirit::x3::get<Description>(context).get();
-      const auto& line = desc.line();
-      desc.segments().push_back({Type, std::experimental::string_view(line.data() + std::distance(line.begin(), first),std::distance(first, last))});
+      desc.segments().emplace_back(Type, first, last);
     }
   };
 }
