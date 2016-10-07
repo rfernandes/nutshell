@@ -128,8 +128,6 @@ void Shell::prompt() {
 int Shell::run() {
   prompt();
 
-  Line buffer;
-
   unsigned keystroke;
   unsigned short utf8Bytes{0};
   while (!_exit && (keystroke = _in.get())) {
@@ -227,23 +225,26 @@ void Shell::output(istream& in){
   _cursor.save();
   auto column = _cursor.position().x;
 
-  auto lastLine{false};
-
   string line;
   int lines{0};
   while (getline(in, line)){
     _cursor.forceDown();
-    lastLine |= _cursor.max().y == _cursor.position().y;
     _cursor.column(_column);
     ++lines;
     _out << line << Color::Reset << Erase::CursorToEnd;
   }
 
+  const auto lastLine{_cursor.max().y == _cursor.position().y};
+
   if (lastLine){
-    _cursor.up(lines);
-    _cursor.column(column);
+    _out << Erase::CursorToEnd;
+    if (lines){
+      _cursor.up(lines);
+      _cursor.column(column);
+    }
   }else{
-    _out << "\n" << Erase::CursorToEnd;
+    _out << '\n' << Erase::CursorToEnd;
+    _cursor.up(1);
     _cursor.restore();
   }
 }
