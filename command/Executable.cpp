@@ -5,11 +5,13 @@
 #include <boost/spirit/home/x3.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
 
+#include <experimental/filesystem>
 #include <unistd.h>
 #include <sys/wait.h>
 
 using namespace std;
 using namespace std::experimental;
+using namespace std::experimental::filesystem;
 
 namespace x3 = boost::spirit::x3;
 
@@ -27,6 +29,15 @@ namespace {
       Executable command;
       vector<Parameters>  parameters;
     };
+  }
+
+  bool is_executable (const path& file) {
+    return is_regular_file(file) &&
+      static_cast<bool>(
+        directory_entry{file}.status().permissions() &
+          (perms::owner_exec |
+           perms::group_exec |
+           perms::others_exec));
   }
 }
 
@@ -143,7 +154,7 @@ Description Executable::parse(const Line& line, Output& output, bool execute){
   bool ok {
     x3::phrase_parse(iter, endIter, parser, x3::space, data) &&
     // Move this into semantic action
-    _paths.count(data.command)
+    (_paths.count(data.command) || is_executable(directory_entry{data.command}))
   };
 
   if (ok){
