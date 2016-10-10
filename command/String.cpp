@@ -45,12 +45,12 @@ namespace {
   )
 }
 
-Description String::parse(const Line& line, Output& output, bool execute){
+ParseResult String::parse(const Line& line, Output& output, bool execute){
   auto iter = line.begin();
   auto endIter = line.end();
 
-  Description desc;
-  const auto parser = x3::with<Description>(ref(desc))[command];
+  ParseResult desc;
+  const auto parser = x3::with<ParseResult>(ref(desc))[command];
 
   string data;
   const bool ok {x3::phrase_parse(iter, endIter, parser, x3::space, data)};

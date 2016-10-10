@@ -23,7 +23,7 @@ Predictive::Predictive(History& history)
                               });
 }
 
-void Predictive::lineUpdated(const Description& /*description*/, Shell& shell){
+void Predictive::lineUpdated(const ParseResult& /*parseResult*/, Shell& shell){
   auto &out = shell.out();
 
   if (_active){

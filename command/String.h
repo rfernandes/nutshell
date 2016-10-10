@@ -7,7 +7,7 @@ class String: public Command{
   friend class StringVisitor;
 
 public:
-  Description parse(const Line& line, Output& output, bool execute) override;
+  ParseResult parse(const Line& line, Output& output, bool execute) override;
 };
 
 #endif

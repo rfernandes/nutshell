@@ -81,7 +81,7 @@ void Shell::executeCommand(const Line& line){
     _modules.commandExecute(line, *this);
 
     try{
-      const Description executionResult {
+      const ParseResult executionResult {
         _commands.parse(_buffer, _out, true)};
 
       _modules.commandExecuted(executionResult, *this);

@@ -12,7 +12,7 @@ class Executable: public Command {
 public:
   Executable(std::set<std::string> paths);
 
-  Description parse(const Line& line, Output& output, bool execute) override;
+  ParseResult parse(const Line& line, Output& output, bool execute) override;
 };
 
 #endif

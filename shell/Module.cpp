@@ -6,14 +6,14 @@ Module::~Module(){
 void Module::commandExecute(const Line& /*line*/, Shell& /*shell*/){
 }
 
-void Module::commandExecuted(const Description& /*description*/, Shell& /*shell*/){
+void Module::commandExecuted(const ParseResult& /*parseResult*/, Shell& /*shell*/){
 }
 
 bool Module::keyPress(unsigned int /*keystroke*/, Shell& /*shell*/){
   return false;
 }
 
-void Module::lineUpdated(const Description& /*description*/, Shell& /*shell*/){
+void Module::lineUpdated(const ParseResult& /*parseResult*/, Shell& /*shell*/){
 }
 
 
@@ -54,9 +54,9 @@ bool ModuleStore::keyPress(unsigned int keystroke, Shell& shell) {
   return handledKey;
 }
 
-void ModuleStore::lineUpdated(const Description& description, Shell& shell) {
+void ModuleStore::lineUpdated(const ParseResult& parseResult, Shell& shell) {
   for (auto &module: _modules){
-    module->lineUpdated(description, shell);
+    module->lineUpdated(parseResult, shell);
   }
 }
 
@@ -67,8 +67,8 @@ void ModuleStore::commandExecute(const Line& line, Shell& shell) {
   }
 }
 
-void ModuleStore::commandExecuted(const Description& description, Shell& shell) {
+void ModuleStore::commandExecuted(const ParseResult& parseResult, Shell& shell) {
   for (auto &module: _modules){
-    module->commandExecuted(description, shell);
+    module->commandExecuted(parseResult, shell);
   }
 }

@@ -18,7 +18,7 @@ class Cd: public Command {
 public:
   Cd();
 
-  Description parse(const Line& line, Output& output, bool execute) override;
+  ParseResult parse(const Line& line, Output& output, bool execute) override;
 
   Status cd(const Line& parameters, Output& curses);
 

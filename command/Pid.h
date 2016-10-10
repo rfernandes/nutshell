@@ -5,7 +5,7 @@
 
 class Pid : public Command{
 public:
-  Description parse(const Line& line, Output& output, bool execute) override;
+  ParseResult parse(const Line& line, Output& output, bool execute) override;
 };
 
 #endif

@@ -148,12 +148,12 @@ namespace {
   };
 }
 
-Description Pid::parse(const Line& line, Output& output, bool execute) {
+ParseResult Pid::parse(const Line& line, Output& output, bool execute) {
   auto iter = line.begin();
   auto endIter = line.end();
 
-  Description desc;
-  const auto parser = x3::with<Description>(ref(desc))[command];
+  ParseResult desc;
+  const auto parser = x3::with<ParseResult>(ref(desc))[command];
 
 
   ast::PidCommand data;

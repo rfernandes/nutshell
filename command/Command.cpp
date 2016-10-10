@@ -19,10 +19,10 @@ Segment::Segment(Segment::Type type,
 }
 
 
-Description CommandStore::parse(const Line& line, Output& output, bool execute) {
-  Description descDefault;
+ParseResult CommandStore::parse(const Line& line, Output& output, bool execute) {
+  ParseResult descDefault;
   for (const auto& command: _commands) {
-    Description descResult {command->parse(line, output, execute)};
+    ParseResult descResult {command->parse(line, output, execute)};
     if (descResult.status() != Status::NoMatch){
       return descResult;
     }
@@ -30,22 +30,22 @@ Description CommandStore::parse(const Line& line, Output& output, bool execute) 
   return descDefault;
 }
 
-Description::Description()
+ParseResult::ParseResult()
 : _status{Status::NoMatch}
 {}
 
-const std::vector<Segment>& Description::segments() const{
+const std::vector<Segment>& ParseResult::segments() const{
   return _segments;
 }
 
-std::vector<Segment>& Description::segments(){
+std::vector<Segment>& ParseResult::segments(){
   return _segments;
 }
 
-Status Description::status() const{
+Status ParseResult::status() const{
   return _status;
 }
 
-void Description::status(Status status){
+void ParseResult::status(Status status){
   _status = status;
 }

@@ -143,12 +143,12 @@ Executable::Executable(std::set<std::string> paths)
 {
 }
 
-Description Executable::parse(const Line& line, Output& output, bool execute){
+ParseResult Executable::parse(const Line& line, Output& output, bool execute){
   auto iter = line.begin();
   const auto& endIter = line.end();
 
-  Description desc;
-  const auto parser = x3::with<Description>(ref(desc))[command];
+  ParseResult desc;
+  const auto parser = x3::with<ParseResult>(ref(desc))[command];
 
   ast::Command data;
   bool ok {

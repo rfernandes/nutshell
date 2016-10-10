@@ -15,7 +15,7 @@ public:
   BuiltIn(std::string command, Function function);
   ~BuiltIn() override;
 
-  Description parse(const Line& line, Output& output, bool execute) override;
+  ParseResult parse(const Line& line, Output& output, bool execute) override;
 
 private:
   const std::string _command;

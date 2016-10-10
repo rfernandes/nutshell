@@ -24,7 +24,7 @@ namespace {
     : _history{history}
     {}
 
-    Description parse(const Line & line, Output & output, bool execute) override;
+    ParseResult parse(const Line & line, Output & output, bool execute) override;
   };
 
   auto &historyCommand = CommandStore::store<HistoryCommand>(history);
@@ -166,12 +166,12 @@ string_view History::suggest(const Line& line) const {
   return ret;
 }
 
-Description HistoryCommand::parse(const Line& line, Output& output, bool execute){
+ParseResult HistoryCommand::parse(const Line& line, Output& output, bool execute){
   auto iter = line.begin();
   auto endIter = line.end();
 
-  Description desc;
-  const auto parser = x3::with<Description>(ref(desc))[command];
+  ParseResult desc;
+  const auto parser = x3::with<ParseResult>(ref(desc))[command];
 
   ast::Command data;
   const bool ok {x3::phrase_parse(iter, endIter, parser, x3::space, data)};
@@ -190,7 +190,7 @@ void History::commandExecute(const Line& /*line*/, Shell& /*shell*/){
   _startTime = std::chrono::system_clock::now();
 }
 
-void History::commandExecuted(const Description& /*description*/, Shell& shell){
+void History::commandExecuted(const ParseResult& /*parseResult*/, Shell& shell){
   const auto endTime = std::chrono::system_clock::now();
   // FIXME: Capture correct return status
   const Entry entry{shell.line(), 0, _startTime, endTime};

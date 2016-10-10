@@ -18,10 +18,10 @@ namespace {
   *    Clear &/Pad when executed
   *    Compact view (maximise line information)
   */
-  ostream & assist(ostream &out, const Line::const_iterator &start, const Description &description, size_t idx){
+  ostream & assist(ostream &out, const Line::const_iterator &start, const ParseResult &parseResult, size_t idx){
     auto it = start;
     for (size_t i = 0; i < idx; ++i) {
-      const auto &segment = description.segments().at(i);
+      const auto &segment = parseResult.segments().at(i);
       fill_n(ostreambuf_iterator<char>(out), distance(it, segment.begin), ' ');
       it = segment.begin;
       if (i + 1 == idx){
@@ -53,7 +53,7 @@ namespace {
 
     if (idx > 0){
       out << "\n";
-      assist(out, start, description, idx - 1);
+      assist(out, start, parseResult, idx - 1);
     }
     return out;
   }
@@ -70,17 +70,17 @@ Assistive::Assistive()
                               });
 }
 
-void Assistive::lineUpdated(const Description& description, Shell& shell){
+void Assistive::lineUpdated(const ParseResult& parseResult, Shell& shell){
   auto& out = shell.out();
 
-  switch (description.status()){
+  switch (parseResult.status()){
     case Status::NoMatch:
       out << Color::Red << shell.line() << Color::Reset;
       break;
     default:{
       auto it = shell.line().begin();
 
-      for (const auto& segment: description.segments()){
+      for (const auto& segment: parseResult.segments()){
         while (it != segment.begin){
           out << *it;
           ++it;
@@ -118,12 +118,12 @@ void Assistive::lineUpdated(const Description& description, Shell& shell){
     }
   }
 
-   // Assistive (description)
+   // Assistive (parseResult)
   if (_active){
-    auto segments = description.segments().size();
+    auto segments = parseResult.segments().size();
     stringstream block;
 
-    assist(block, shell.line().begin(), description, segments);
+    assist(block, shell.line().begin(), parseResult, segments);
 
     shell.output(block);
   }

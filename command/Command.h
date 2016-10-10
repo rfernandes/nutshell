@@ -27,12 +27,12 @@ struct Segment{
           std::string::const_iterator end);
 };
 
-class Description{
+class ParseResult{
   Status _status;
   std::vector<Segment> _segments;
 
 public:
-  Description();
+  ParseResult();
 
   Status status() const;
   void status(Status status);
@@ -46,7 +46,7 @@ public:
 
   virtual ~Command() = default;
 
-  virtual Description parse(const Line& line, Output& output, bool execute) = 0;
+  virtual ParseResult parse(const Line& line, Output& output, bool execute) = 0;
 };
 
 class CommandStore : public Command{
@@ -62,7 +62,7 @@ private:
   static CommandStore& instance();
   std::unordered_set<std::unique_ptr<Command>> _commands;
 
-  Description parse(const Line& line, Output& output, bool execute);
+  ParseResult parse(const Line& line, Output& output, bool execute);
 
   friend class Shell;
   friend class Function;

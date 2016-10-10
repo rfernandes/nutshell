@@ -10,7 +10,7 @@ public:
   using Store = std::unordered_map<std::string, std::string>;
 
   Variable();
-  Description parse(const Line& line, Output& output, bool execute) override;
+  ParseResult parse(const Line& line, Output& output, bool execute) override;
 
 private:
   friend class VariableVisitor;

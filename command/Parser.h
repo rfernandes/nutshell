@@ -19,7 +19,7 @@ namespace parser
                            Iterator const& last,
                            Ast& /*ast*/,
                            Context const& context){
-      auto& desc = boost::spirit::x3::get<Description>(context).get();
+      auto& desc = boost::spirit::x3::get<ParseResult>(context).get();
       desc.segments().emplace_back(Type, first, last);
     }
   };

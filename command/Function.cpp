@@ -63,12 +63,12 @@ Function::Function(Functions functions)
 : _functions{move(functions)}
 {}
 
-Description Function::parse(const Line& line, Output& output, bool execute){
+ParseResult Function::parse(const Line& line, Output& output, bool execute){
   auto iter = line.begin();
   const auto& endIter = line.end();
 
-  Description desc;
-  const auto parser = x3::with<Description>(ref(desc))[command];
+  ParseResult desc;
+  const auto parser = x3::with<ParseResult>(ref(desc))[command];
 
   using namespace std::placeholders;
   auto matcher = [&](auto &ctx){

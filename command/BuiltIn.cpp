@@ -16,13 +16,13 @@ BuiltIn::BuiltIn(string command, Function function)
 
 BuiltIn::~BuiltIn() = default;
 
-Description BuiltIn::parse(const Line& line, Output& output, bool execute) {
+ParseResult BuiltIn::parse(const Line& line, Output& output, bool execute) {
   auto matched = matches(line);
   if (matched && execute){
     _function(line, output);
   }
 
-  Description desc;
+  ParseResult desc;
   if (matched){
     desc.status(Status::Ok);
     desc.segments().emplace_back(Segment::Type::Builtin, line.begin(), line.end());

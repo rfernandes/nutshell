@@ -10,9 +10,9 @@ class Module{
 public:
   virtual ~Module() = 0;
   virtual bool keyPress(unsigned keystroke, Shell& shell);
-  virtual void lineUpdated(const Description& description, Shell& shell);
+  virtual void lineUpdated(const ParseResult& parseResult, Shell& shell);
   virtual void commandExecute(const Line& line, Shell& shell);
-  virtual void commandExecuted(const Description& description, Shell& shell);
+  virtual void commandExecuted(const ParseResult& parseResult, Shell& shell);
 };
 
 class Dependency
@@ -51,9 +51,9 @@ public:
   void initialize();
 
   bool keyPress(unsigned int keystroke, Shell & shell) override;
-  void lineUpdated(const Description & description, Shell & shell) override;
+  void lineUpdated(const ParseResult & parseResult, Shell & shell) override;
   void commandExecute(const Line & line, Shell & shell) override;
-  void commandExecuted(const Description & description, Shell & shell) override;
+  void commandExecuted(const ParseResult & parseResult, Shell & shell) override;
 
 private:
   static ModuleStore& instance();
