@@ -35,12 +35,14 @@ Shell::Shell()
   setlocale(LC_ALL, "");
 
   CommandStore::store<BuiltIn>(":exit",
+                               "Exit nutshell",
                                [&](const Line& /*line*/, Output& /*output*/){
                                  _exit = true;
                                  return Status::Ok;
                                });
 
   CommandStore::store<BuiltIn>(":help",
+                               "Display help",
                                [](const Line& /*line*/, Output& output){
                                  output << "No one can help you (for now)\n";
                                  return Status::Ok;
@@ -48,6 +50,7 @@ Shell::Shell()
 
   // Comments are a simple no-op
   CommandStore::store<BuiltIn>("#",
+                               "Comment",
                                [](const Line& /*line*/, Output& /*output*/){
                                  return Status::Ok;
                                });

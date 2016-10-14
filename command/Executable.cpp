@@ -45,8 +45,8 @@ BOOST_FUSION_ADAPT_STRUCT(ast::Command, command, parameters)
 
 namespace {
   struct option_class: parser::type_annotation<Segment::Type::Parameter>{};
-  struct longOption_class: parser::type_annotation<Segment::Type::Argument>{};
-  struct parameter_class: parser::type_annotation<Segment::Type::Builtin>{};
+  struct longOption_class: parser::type_annotation<Segment::Type::Parameter>{};
+  struct parameter_class: parser::type_annotation<Segment::Type::Parameter>{};
   struct executable_class: parser::type_annotation<Segment::Type::Command>{};
   struct command_class;
 

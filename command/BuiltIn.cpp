@@ -8,8 +8,9 @@ bool BuiltIn::matches(const Line& line) const{
   return line.substr(0, line.find_first_of(' ')) == _command;
 }
 
-BuiltIn::BuiltIn(string command, Function function)
+BuiltIn::BuiltIn(string command, string help, Function function)
 : _command{move(command)}
+, _help{move(help)}
 , _function{move(function)}
 {
 }
@@ -25,7 +26,7 @@ ParseResult BuiltIn::parse(const Line& line, Output& output, bool execute) {
   ParseResult desc;
   if (matched){
     desc.status(Status::Ok);
-    desc.segments().emplace_back(Segment::Type::Builtin, line.begin(), line.end());
+    desc.segments().emplace_back(Segment::Type::Builtin, line.begin(), line.end(), _help);
   }
 
   return desc;

@@ -5,6 +5,7 @@
 
 class Assistive: public Module{
   bool _active;
+
 public:
   Assistive();
 

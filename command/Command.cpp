@@ -1,22 +1,46 @@
 #include "Command.h"
 
 #include <algorithm>
+#include <type_traits>
+
+#include <experimental/string_view>
 
 using namespace std;
+using namespace std::experimental;
 
 CommandStore& CommandStore::instance() {
   static CommandStore instance;
   return instance;
 }
 
+namespace {
+  string_view make_view(string::const_iterator begin,
+                        string::const_iterator end){
+    return {&*begin, distance(begin, end)};
+  }
+}
+
 Segment::Segment(Segment::Type type,
                  std::string::const_iterator begin,
-                 std::string::const_iterator end)
+                 std::string::const_iterator end,
+                 std::string info)
 : type{type}
-, begin{begin}
-, end{end}
+, view{make_view(begin, end)}
+, info{info}
 {
 }
+
+const char * toString(Segment::Type type){
+  const char * data[]{"unknown",
+                      "command",
+                      "builtin",
+                      "function",
+                      "parameter",
+                      "argument",
+                      "string"};
+  return data[static_cast<underlying_type_t<Segment::Type>>(type)];
+}
+
 
 
 ParseResult CommandStore::parse(const Line& line, Output& output, bool execute) {

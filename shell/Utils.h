@@ -20,4 +20,17 @@ namespace utf8{
   size_t idx(const std::string& str, unsigned idx);
 }
 
+namespace manip{
+
+  class repeat{
+    char _ch;
+    size_t _size;
+
+  public:
+    repeat(char ch, size_t size);
+
+    friend std::ostream& operator<< (std::ostream& out, const repeat& manip);
+  };
+}
+
 #endif

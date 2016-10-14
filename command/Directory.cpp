@@ -106,6 +106,7 @@ Cd::Cd()
 , _idx{0}
 {
   CommandStore::store<BuiltIn>(":cwd",
+                               "Print current working directory",
                                [this](const Line& /*line*/, Output& output){
                                  output << cwd().string();
                                  return Status::Ok;

@@ -17,6 +17,7 @@ Predictive::Predictive(History& history)
 {
   // Toggle predictive functionality
   CommandStore::store<BuiltIn>(":predictive",
+                               "Toggle history based prediction",
                               [=](const Line& /*line*/, Output& /*output*/){
                                 toggle();
                                 return Status::Ok;

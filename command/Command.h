@@ -18,27 +18,35 @@ enum class Status {
 };
 
 struct Segment{
-  enum class Type{Command, Builtin, Function, Parameter, Argument, String};
+  enum class Type{Unknown, Command, Builtin, Function, Parameter, Argument, String};
   Type type;
-  std::string::const_iterator begin, end;
+  std::experimental::string_view view;
+  std::string info;
 
   Segment(Type type,
           std::string::const_iterator begin,
-          std::string::const_iterator end);
+          std::string::const_iterator end,
+          std::string info = "");
 };
 
-class ParseResult{
-  Status _status;
-  std::vector<Segment> _segments;
+const char* toString(Segment::Type type);
 
+class ParseResult{
 public:
+  using Segments = std::vector<Segment>;
+
   ParseResult();
 
   Status status() const;
   void status(Status status);
 
-  const std::vector<Segment>& segments() const;
-  std::vector<Segment>& segments();
+  const Segments& segments() const;
+  Segments& segments();
+
+private:
+  Status _status;
+  Segments _segments;
+
 };
 
 class Command {

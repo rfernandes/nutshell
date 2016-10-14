@@ -1,6 +1,7 @@
 #include "Utils.h"
 
 #include <algorithm>
+#include <iostream>
 
 using namespace std;
 
@@ -17,3 +18,16 @@ namespace utf8{
   }
 
 }
+
+namespace manip{
+  repeat::repeat(char ch, size_t size)
+  :_ch{ch}
+  ,_size{size}
+  {}
+
+  ostream& operator << (ostream& out, const repeat& rep){
+    fill_n(ostreambuf_iterator<char>(out), rep._size, rep._ch);
+    return out;
+  }
+}
+
