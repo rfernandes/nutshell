@@ -3,6 +3,7 @@
 #include <command/BuiltIn.h>
 #include <io/Output.h>
 #include <shell/History.h>
+#include <shell/Shell.h>
 
 using namespace std;
 using namespace manip;
@@ -28,9 +29,9 @@ void Predictive::lineUpdated(const ParseResult& /*parseResult*/, Shell& shell){
   auto &out = shell.out();
 
   if (_active){
-     _suggestion = _history.suggest(shell.line());
+     _suggestion = _history.suggest(shell.line().line());
     if (!_suggestion.empty()){
-      out << _suggestion.substr(shell.line().size()) << Color::Reset;
+      out << _suggestion.substr(shell.line().line().size()) << Color::Reset;
     }
     out << Erase::CursorToEnd;
   }

@@ -15,7 +15,8 @@ using namespace std::experimental;
 using namespace manip;
 
 Shell::Shell()
-: _commands{CommandStore::instance()}
+: _line{ModuleStore::store<LineBuffer>()}
+, _commands{CommandStore::instance()}
 , _modules{ModuleStore::instance()}
 , _out{cout}
 , _cd{CommandStore::store<Cd>()}
@@ -67,13 +68,20 @@ Shell::Shell()
   }
 }
 
-const Line& Shell::line() const{
+const LineBuffer& Shell::line() const{
   return _line;
 }
 
-void Shell::line(const Line& line){
-  _line = line;
-  _idx = utf8::size(_line);
+LineBuffer& Shell::line(){
+  return _line;
+}
+
+void Shell::line(const LineBuffer& line){
+  _line.line(line.line());
+}
+
+void Shell::exit(){
+  _exit = true;
 }
 
 void Shell::executeCommand(const Line& line){
@@ -93,12 +101,11 @@ void Shell::executeCommand(const Line& line){
         case Status::Ok:
           break;
         case Status::NoMatch:
-          _out << "Command not found [" << _line.substr(0, _line.find_first_of(' ')) << "]\n";
+          _out << "Command not found [" << _line.firstWord() << "]\n";
           break;
         case Status::Incomplete:
           _function.parse(":prompt_feed", _out, true);
           _column = _cursor.position().x;
-          _idx = 0;
           _buffer += '\n';
           _line.clear();
           return;
@@ -115,17 +122,15 @@ void Shell::executeCommand(const Line& line){
 
 void Shell::displayLine() {
   _cursor.column(_column);
-  auto matched = _commands.parse(_line, _out, false);
+  auto matched = _commands.parse(_line.line(), _out, false);
   _modules.lineUpdated(matched, *this);
-  _cursor.column(utf8::idx(_line, _idx) + _column);
+  _cursor.column(_line.pos() + _column);
 }
 
 void Shell::prompt() {
   // call Function "directly", instead of going through store
   _function.parse(":prompt", _out, true);
   _column = _cursor.position().x;
-
-  _idx = 0;
 }
 
 int Shell::run() {
@@ -140,81 +145,13 @@ int Shell::run() {
       utf8Bytes += utf8::bytes(keystroke);
     }
     if (--utf8Bytes){
-      _line.insert(_idx++, 1, keystroke);
+      _line.insert(keystroke);
       continue;
     }
 
     bool handledKey{_modules.keyPress(keystroke, *this)};
-
-    if (handledKey){
-      continue;
-    }
-
-    switch (keystroke) {
-      case '\n':
-        executeCommand(_line);
-        break;
-      case Input::Backspace:
-      case '\b': // Ctrl-H
-        if (!_idx){
-          break;
-        }
-        _cursor.left();
-        while (!utf8::is_utf8(_line[--_idx])){};
-      case Input::Delete: {
-        _line.erase(_idx, utf8::bytes(_line[_idx]));
-        displayLine();
-        break;
-      }
-      case Input::Left:
-        if (_idx > 0){
-          _cursor.left();
-          while (!utf8::is_utf8(_line[--_idx])){}
-        }
-        break;
-      case Input::Right:
-        if (_line.size() > _idx){
-          _cursor.right();
-          _idx += utf8::bytes(_line[_idx]);;
-        }
-        break;
-      case Input::Home:
-        _idx = 0;
-        _cursor.column(_column);
-        break;
-      case Input::End:
-        _idx = _line.size();
-        _cursor.column(_column + utf8::size(_line));
-        break;
-      case 23:{ //Ctrl-W
-        if (!_idx){
-          break;
-        }
-        auto start = _idx;
-        while (--_idx && _line[_idx] == ' '){};
-        while (_idx-- && _line[_idx] != ' '){};
-        if (_idx != 0) ++_idx;
-        _line.erase(_idx, start - _idx);
-        displayLine();
-        break;
-      }
-      case '\t': // Complete / suggest
-
-        break;
-      case 4: //Ctrl-D
-        _exit = true;
-        break;
-      case Input::Unknown: // Unknown special key received
-        break; // ignore list
-      default: {
-        if (keystroke > 0xff) {
-          _out << "■";
-          continue;
-        }
-        _line.insert(_idx++, 1, keystroke);
-        displayLine();
-        break;
-      }
+    if (handledKey) {
+      displayLine();
     }
   }
   return 0;
@@ -247,7 +184,6 @@ void Shell::output(istream& in){
     }
   }else{
     _out << '\n' << Erase::CursorToEnd;
-    _cursor.up(1);
     _cursor.restore();
   }
 }

@@ -1,6 +1,7 @@
 #ifndef PREDICTIVE_H
 #define PREDICTIVE_H
 
+#include <shell/Line.h>
 #include <shell/Module.h>
 
 class History;

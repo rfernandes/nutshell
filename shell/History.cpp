@@ -1,6 +1,7 @@
 #include "History.h"
 
 #include <command/Parser.h>
+#include <shell/Shell.h>
 
 #include <boost/spirit/home/x3.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
@@ -193,7 +194,7 @@ void History::commandExecute(const Line& /*line*/, Shell& /*shell*/){
 void History::commandExecuted(const ParseResult& /*parseResult*/, Shell& shell){
   const auto endTime = std::chrono::system_clock::now();
   // FIXME: Capture correct return status
-  const Entry entry{shell.line(), 0, _startTime, endTime};
+  const Entry entry{shell.line().line(), 0, _startTime, endTime};
   add(entry);
 }
 
@@ -202,8 +203,8 @@ bool History::keyPress(unsigned int keystroke, Shell& shell){
     case Input::Up:
     case Input::Down: {
       const auto& line = shell.line();
-      const auto& newLine = keystroke == Input::Down ? forward(line) : backward(line);
-      shell.line(newLine);
+      const auto& newLine = keystroke == Input::Down ? forward(line.line()) : backward(line.line());
+      shell.line().line(newLine);
       shell.displayLine();
       return true;
     }

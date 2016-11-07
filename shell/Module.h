@@ -1,10 +1,12 @@
 #ifndef MODULE_H
 #define MODULE_H
 
-#include <shell/Shell.h>
-
 #include <memory>
 #include <vector>
+
+class Shell;
+class ParseResult;
+using Line = std::string;
 
 class Module{
 public:

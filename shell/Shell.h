@@ -8,6 +8,7 @@
 #include <io/Output.h>
 #include <shell/Path.h>
 #include <shell/Line.h>
+#include <shell/LineBuffer.h>
 
 class CommandStore;
 class ModuleStore;
@@ -21,10 +22,13 @@ public:
 
   void executeCommand(const Line& line);
   void displayLine();
-  const Line& line() const;
-  void line(const Line& line);
+  const LineBuffer& line() const;
+  LineBuffer& line();
+  void line(const LineBuffer& line);
 
   void output(std::istream& string);
+
+  void exit();
 
   std::ostream& out();
 
@@ -32,7 +36,7 @@ private:
 
   void prompt();
 
-  Line _line;
+  LineBuffer& _line;
   Line _buffer;
   CommandStore& _commands;
   ModuleStore& _modules;
@@ -44,7 +48,6 @@ private:
   Function &_function;
   bool _exit;
   unsigned _column;
-  unsigned long _idx;
 };
 
 #endif
