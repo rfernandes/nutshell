@@ -2,10 +2,13 @@
 
 #include <command/BuiltIn.h>
 #include <io/Output.h>
+#include <shell/Shell.h>
 #include <shell/History.h>
 #include <shell/Utils.h>
 
+#include <experimental/filesystem>
 #include <experimental/string_view>
+#include <unordered_map>
 
 using namespace std;
 using namespace std::experimental;
@@ -136,10 +139,10 @@ void Assistive::lineUpdated(const ParseResult& parseResult, Shell& shell){
 
   switch (parseResult.status()){
     case Status::NoMatch:
-      out << Color::Red << shell.line() << Color::Reset;
+      out << Color::Red << shell.line().line() << Color::Reset;
       break;
     default:{
-      auto it = shell.line().begin();
+      auto it = shell.line().line().begin();
 
       for (const auto& segment: parseResult.segments()){
         while (it != segment.view.begin()){
@@ -153,7 +156,7 @@ void Assistive::lineUpdated(const ParseResult& parseResult, Shell& shell){
         }
       }
       out << Mode::Normal << Color::Reset;
-      while (it != shell.line().end()){
+      while (it != shell.line().line().end()){
         out << *it;
         ++it;
       }

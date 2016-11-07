@@ -22,13 +22,14 @@ io/Cursor.cpp
 io/Input.cpp
 io/Output.cpp
 main.cpp
-shell/History.cpp
-shell/Path.cpp
 shell/Assistive.cpp
+shell/History.cpp
+shell/LineBuffer.cpp
+shell/Module.cpp
+shell/Path.cpp
 shell/Predictive.cpp
 shell/Shell.cpp
 shell/Utils.cpp
-shell/Module.cpp
 )
 
 find_package(Boost COMPONENTS system REQUIRED QUIET)
