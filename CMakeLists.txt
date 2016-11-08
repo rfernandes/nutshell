@@ -34,7 +34,7 @@ add_executable(nutshell
 main.cpp
 )
 
-find_package(Boost COMPONENTS system REQUIRED QUIET)
+find_package(Boost REQUIRED QUIET)
 
 target_include_directories(lnutshell
 PUBLIC
@@ -44,7 +44,6 @@ ${Boost_INCLUDE_DIRS}
 
 target_link_libraries(lnutshell
 stdc++fs
-
 ${Boost_LIBRARIES}
 )
 
@@ -54,3 +53,20 @@ target_link_libraries(nutshell
 )
 
 install(TARGETS nutshell RUNTIME DESTINATION bin)
+
+
+option(cov "Enable profiling and coverage report analysis" OFF)
+
+if(${CMAKE_CXX_COMPILER_ID} MATCHES GNU AND ${cov})
+  message(STATUS "Enabling profile build for tests")
+  set_target_properties(lnutshell
+    PROPERTIES
+      COMPILE_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -fprofile-arcs -ftest-coverage --coverage"
+      LINK_FLAGS "--coverage")
+  target_link_libraries(lnutshell
+    gcov)
+endif()
+
+
+enable_testing()
+add_subdirectory(test)

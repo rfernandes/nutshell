@@ -59,7 +59,7 @@ namespace {
           }
         }else{
           for (const auto& segment: segments){
-            ret.emplace_back(string("unknown ") + enum_cast<const char*>(segment.type));
+            ret.emplace_back(string("unknown ") + enum_cast<const char *>(segment.type));
           }
         }
       }

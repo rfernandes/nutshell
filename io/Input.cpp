@@ -10,9 +10,9 @@ using namespace std;
 namespace {
   struct termios oldt,newt;
 
-  unsigned decode(char ch) {
-    cin.get(); // Skip
-    switch (ch = cin.get()) {
+  unsigned decode(istream& in, char ch) {
+    in.get(); // Skip
+    switch (ch = in.get()) {
       case 'A': return Input::Up;
       case 'B': return Input::Down;
       case 'C': return Input::Right;
@@ -21,10 +21,10 @@ namespace {
       case 'F': return Input::End;
       case 'M': return Input::CtrlM;
       case '1': {
-        cin.get(); // Skip ;
-        switch (ch = cin.get()) {
+        in.get(); // Skip ;
+        switch (ch = in.get()) {
           case '5': {
-            switch (ch = cin.get()) {
+            switch (ch = in.get()) {
               case 'A': return Input::CtrlUp;
               case 'B': return Input::CtrlDown;
               case 'C': return Input::CtrlRight;
@@ -38,15 +38,16 @@ namespace {
             return Input::Unknown;
         }
       }
-      case '3': cin.get(); return Input::Delete; // Skip tilde
+      case '3': in.get(); return Input::Delete; // Skip tilde
       default : cout << " >>" << +ch << "<<"; return Input::Unknown;
     }
   }
 }
 
-Input::Input() {
+Input::Input(istream& in)
+: _in(in)
+{
   std::ios_base::sync_with_stdio(false);
-
 
   tcgetattr(STDIN_FILENO, &oldt);
   newt = oldt;
@@ -59,6 +60,6 @@ Input::~Input() {
 }
 
 unsigned int Input::get() {
-  int ch {cin.get()};
-  return ch == '\x1b' ? decode(ch) : ch;
+  int ch {_in.get()};
+  return ch == '\x1b' ? decode(_in, ch) : ch;
 }

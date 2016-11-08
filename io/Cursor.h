@@ -1,8 +1,16 @@
 #ifndef CURSOR
 #define CURSOR
 
+#include <iostream>
+
 class Cursor{
+
+  std::istream& _in;
+  std::ostream& _out;
+
 public:
+  Cursor(std::istream& input, std::ostream& output);
+
   struct Position{
     unsigned x, y;
   };

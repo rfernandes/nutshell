@@ -1,7 +1,10 @@
 #ifndef INPUT_H
 #define INPUT_H
 
+#include <iostream>
+
 class Input{
+  std::istream& _in;
 public:
 
   enum Key{
@@ -24,7 +27,7 @@ public:
     Delete,
   };
 
-  Input();
+  Input(std::istream &in);
   ~Input();
 
   unsigned get();

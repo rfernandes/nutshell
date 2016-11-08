@@ -54,7 +54,7 @@ Enum enum_cast(const Data& from){
   const auto idx = std::find_if(std::begin(data), std::end(data), [from](auto data){
     return !std::strcmp(data, from);
   });
-  return static_cast<Enum>(0);
+  return static_cast<Enum>(idx ? std::distance(std::begin(data), idx): 0);
 }
 
 #endif

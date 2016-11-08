@@ -17,7 +17,9 @@ using namespace manip;
 Shell::Shell()
 : _commands{CommandStore::instance()}
 , _modules{ModuleStore::instance()}
+, _in{cin}
 , _out{cout}
+, _cursor{cin, cout}
 , _cd{CommandStore::store<Cd>()}
 , _function{
     CommandStore::store<Function>(std::unordered_map<string, string>{
