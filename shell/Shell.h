@@ -18,13 +18,11 @@ class Shell {
 public:
   Shell();
 
-  int run();
+  void interactive();
+  void script(std::istream& in);
 
-  void executeCommand(const Line& line);
-  void displayLine();
-  const LineBuffer& line() const;
-  LineBuffer& line();
-  void line(const LineBuffer& line);
+  void executeCommand(const LineBuffer& line);
+  void displayLine(const LineBuffer& line);
 
   void output(std::istream& string);
 
@@ -33,10 +31,9 @@ public:
   std::ostream& out();
 
 private:
-
+  ParseResult handleExecuteCommand(const LineBuffer& line);
   void prompt();
 
-  LineBuffer& _line;
   Line _buffer;
   CommandStore& _commands;
   ModuleStore& _modules;

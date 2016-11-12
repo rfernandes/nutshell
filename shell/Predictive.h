@@ -13,7 +13,7 @@ class Predictive: public Module{
 public:
   Predictive(History& history);
 
-  void lineUpdated(const ParseResult& parseResult, Shell &shell) override;
+  void lineUpdated(const ParseResult& parseResult, const LineBuffer& line, Shell &shell) override;
   bool keyPress(unsigned int keystroke, Shell &shell) override;
 
   bool toggle();

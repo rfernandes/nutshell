@@ -134,15 +134,15 @@ Assistive::Assistive()
                               });
 }
 
-void Assistive::lineUpdated(const ParseResult& parseResult, Shell& shell){
+void Assistive::lineUpdated(const ParseResult& parseResult, const LineBuffer& line, Shell& shell){
   auto& out = shell.out();
 
   switch (parseResult.status()){
     case Status::NoMatch:
-      out << Color::Red << shell.line().line() << Color::Reset;
+      out << Color::Red << line.line() << Color::Reset;
       break;
     default:{
-      auto it = shell.line().line().begin();
+      auto it = line.line().begin();
 
       for (const auto& segment: parseResult.segments()){
         while (it != segment.view.begin()){
@@ -156,7 +156,7 @@ void Assistive::lineUpdated(const ParseResult& parseResult, Shell& shell){
         }
       }
       out << Mode::Normal << Color::Reset;
-      while (it != shell.line().line().end()){
+      while (it != line.line().end()){
         out << *it;
         ++it;
       }

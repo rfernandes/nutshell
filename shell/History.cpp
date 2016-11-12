@@ -134,16 +134,16 @@ void History::add(const Entry& entry) {
   _idx = _history.end();
 }
 
-const Line& History::forward(const Line& current) {
+const Line& History::forward() {
   return _idx < _history.end()
     ? _idx + 1 == _history.end() ? empty: (++_idx)->line
-    : _history.empty() ? current: _history.back().line;
+    : _history.empty() ? empty: _history.back().line;
 }
 
-const Line& History::backward(const Line& current) {
+const Line& History::backward() {
   return _idx > _history.begin()
     ? (--_idx)->line
-    : _history.empty() ? current: _history.front().line;
+    : _history.empty() ? empty: _history.front().line;
 }
 
 void History::clear() {
@@ -191,10 +191,10 @@ void History::commandExecute(const Line& /*line*/, Shell& /*shell*/){
   _startTime = std::chrono::system_clock::now();
 }
 
-void History::commandExecuted(const ParseResult& /*parseResult*/, Shell& shell){
+void History::commandExecuted(const ParseResult& /*parseResult*/, const Line &line, Shell& shell){
   const auto endTime = std::chrono::system_clock::now();
   // FIXME: Capture correct return status
-  const Entry entry{shell.line().line(), 0, _startTime, endTime};
+  const Entry entry{line, 0, _startTime, endTime};
   add(entry);
 }
 
@@ -202,14 +202,14 @@ bool History::keyPress(unsigned int keystroke, Shell& shell){
   switch (keystroke){
     case Input::Up:
     case Input::Down: {
-      const auto& line = shell.line();
-      const auto& newLine = keystroke == Input::Down ? forward(line.line()) : backward(line.line());
-      shell.line().line(newLine);
-      shell.displayLine();
+      const auto& newLine = keystroke == Input::Down ? forward() : backward();
+      if (!newLine.empty()){
+        shell.displayLine(LineBuffer{newLine});
+      }
       return true;
     }
     case 18: //Ctrl-R
-      cout << "History interactive mode unimplemented\n";
+      cout << "Interactive history mode unimplemented\n";
       return true;
   }
   return false;

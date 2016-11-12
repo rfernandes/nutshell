@@ -9,7 +9,7 @@ class Assistive: public Module{
 public:
   Assistive();
 
-  void lineUpdated(const ParseResult& parseResult, Shell &shell) override;
+  void lineUpdated(const ParseResult& parseResult, const LineBuffer& line, Shell &shell) override;
 
   bool toggle();
 };

@@ -25,13 +25,13 @@ Predictive::Predictive(History& history)
                               });
 }
 
-void Predictive::lineUpdated(const ParseResult& /*parseResult*/, Shell& shell){
+void Predictive::lineUpdated(const ParseResult& /*parseResult*/, const LineBuffer& line, Shell& shell){
   auto &out = shell.out();
 
   if (_active){
-     _suggestion = _history.suggest(shell.line().line());
+     _suggestion = _history.suggest(line.line());
     if (!_suggestion.empty()){
-      out << _suggestion.substr(shell.line().line().size()) << Color::Reset;
+      out << _suggestion.substr(line.line().size()) << Color::Reset;
     }
     out << Erase::CursorToEnd;
   }
@@ -41,7 +41,7 @@ bool Predictive::keyPress(unsigned int keystroke, Shell& shell){
   switch (keystroke){
     case Input::CtrlM:
       if (!_suggestion.empty()){
-        shell.executeCommand(_suggestion.to_string());
+        shell.executeCommand(LineBuffer{_suggestion.to_string()});
         _suggestion = Suggestion{};
       }
       return true;
