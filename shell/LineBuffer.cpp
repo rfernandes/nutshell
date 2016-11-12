@@ -9,6 +9,17 @@
 using namespace std;
 using namespace std::experimental;
 
+namespace {
+  auto lineBuffer = ModuleStore::store<LineBuffer>();
+}
+
+LineBuffer::LineBuffer() = default;
+
+LineBuffer::LineBuffer(std::string line)
+: _line{std::move(line)}
+{
+}
+
 void LineBuffer::backwardKillWord(){
   if (_idx){
     auto start = _idx;
@@ -53,44 +64,45 @@ bool LineBuffer::keyPress(unsigned int keystroke, Shell& shell){
   switch (keystroke){
     case 23: //Ctrl-W
       backwardKillWord();
-      return true;
+      break;
     case Input::Backspace:
     case '\b': // Ctrl-H
       if (!_idx){
-        return true;
+        break;
       }
       while (!utf8::is_utf8(_line[--_idx])){};
     case Input::Delete:
       _line.erase(_idx, utf8::bytes(_line[_idx]));
-      return true;
+      break;
     case Input::Left:
       if (_idx > 0){
         while (!utf8::is_utf8(_line[--_idx])){}
       }
-      return true;
+      break;
     case Input::Right:
       if (_line.size() > _idx){
         _idx += utf8::bytes(_line[_idx]);;
       }
-      return true;
+      break;
     case Input::Home:
       _idx = 0;
-      return true;
+      break;
     case Input::End:
       _idx = _line.size();
-      return true;
+      break;
     case '\n':
-      shell.executeCommand(_line);
-      return true;
+      shell.executeCommand(*this);
+      clear();
+      break;
     case 4: //Ctrl-D
       shell.exit();
-      break;
+      return false;
     case Input::Unknown: // Unknown special key received
-      break; // ignore list
+      return false; // ignore list
     default:
       insert(keystroke);
-      shell.displayLine();
-      return false;
+      break;
   }
-  return false;
+  shell.displayLine(*this);
+  return true;
 }

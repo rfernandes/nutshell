@@ -9,6 +9,10 @@ class LineBuffer: public Module{
   std::string _line;
   std::size_t _idx {0};
 public:
+
+  LineBuffer();
+  explicit LineBuffer(std::string line);
+
   void backwardKillWord();
 
   void clear();

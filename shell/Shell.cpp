@@ -15,8 +15,7 @@ using namespace std::experimental;
 using namespace manip;
 
 Shell::Shell()
-: _line{ModuleStore::store<LineBuffer>()}
-, _commands{CommandStore::instance()}
+: _commands{CommandStore::instance()}
 , _modules{ModuleStore::instance()}
 , _out{cout}
 , _cd{CommandStore::store<Cd>()}
@@ -61,70 +60,54 @@ Shell::Shell()
   // Source ~/nutshellrc
   ifstream config{_cd.home() / ".nutshellrc"};
   if (config) {
-    string command;
-    while (getline(config, command)) {
-      _commands.parse(command, _out, true);
-    }
+    script(config);
   }
-}
-
-const LineBuffer& Shell::line() const{
-  return _line;
-}
-
-LineBuffer& Shell::line(){
-  return _line;
-}
-
-void Shell::line(const LineBuffer& line){
-  _line.line(line.line());
 }
 
 void Shell::exit(){
   _exit = true;
 }
 
-void Shell::executeCommand(const Line& line){
-  _out << '\n';
-  _buffer += line;
+ParseResult Shell::scriptExecuteCommand(const LineBuffer& line){
+  _buffer += line.line();
 
-  if (!_buffer.empty()) {
-    _modules.commandExecute(line, *this);
+  const ParseResult executionResult {
+    _commands.parse(_buffer, _out, true)};
 
-    try{
-      const ParseResult executionResult {
-        _commands.parse(_buffer, _out, true)};
-
-      _modules.commandExecuted(executionResult, *this);
-
-      switch (executionResult.status()) {
-        case Status::Ok:
-          break;
-        case Status::NoMatch:
-          _out << "Command not found [" << _line.firstWord() << "]\n";
-          break;
-        case Status::Incomplete:
-          _function.parse(":prompt_feed", _out, true);
-          _column = _cursor.position().x;
-          _buffer += '\n';
-          _line.clear();
-          return;
-      }
-    } catch (exception& ex) {
-      _out << "Error " << ex.what() << '\n';
-    }
-
-    _buffer.clear();
-    _line.clear();
+  switch (executionResult.status()) {
+    case Status::Incomplete:
+      _buffer += '\n';
+      break;
+    default:
+      _buffer.clear();
+      break;
   }
-  prompt();
+  return executionResult;
 }
 
-void Shell::displayLine() {
+void Shell::executeCommand(const LineBuffer& line){
+  _out << '\n';
+  _modules.commandExecute(line.line(), *this);
+  const auto executionResult = scriptExecuteCommand(line);
+  _modules.commandExecuted(executionResult, line.line(), *this);
+  switch (executionResult.status()) {
+    case Status::NoMatch:
+      _out << "Command not found [" << line.firstWord() << "]\n";
+    case Status::Ok:
+      prompt();
+      break;
+    case Status::Incomplete:
+      _function.parse(":prompt_feed", _out, true);
+      _column = _cursor.position().x;
+      break;
+  }
+}
+
+void Shell::displayLine(const LineBuffer& line){
   _cursor.column(_column);
-  auto matched = _commands.parse(_line.line(), _out, false);
-  _modules.lineUpdated(matched, *this);
-  _cursor.column(_line.pos() + _column);
+  auto matched = _commands.parse(line.line(), _out, false);
+  _modules.lineUpdated(matched, line, *this);
+  _cursor.column(line.pos() + _column);
 }
 
 void Shell::prompt() {
@@ -133,28 +116,25 @@ void Shell::prompt() {
   _column = _cursor.position().x;
 }
 
-int Shell::run() {
+// Interactive
+void Shell::interactive() {
   prompt();
 
   unsigned keystroke;
-  unsigned short utf8Bytes{0};
   while (!_exit && (keystroke = _in.get())) {
-
-    // Parse utf codepoints first, so visitors only get whole chars
-    if (!utf8Bytes){
-      utf8Bytes += utf8::bytes(keystroke);
-    }
-    if (--utf8Bytes){
-      _line.insert(keystroke);
-      continue;
-    }
-
-    bool handledKey{_modules.keyPress(keystroke, *this)};
-    if (handledKey) {
-      displayLine();
-    }
+    keyPress(keystroke);
   }
-  return 0;
+}
+
+void Shell::script(istream& in) {
+  string line;
+  while (!_exit && getline(in, line)) {
+    scriptExecuteCommand(LineBuffer{line});
+  }
+}
+
+bool Shell::keyPress(unsigned keystroke){
+  return _modules.keyPress(keystroke, *this);
 }
 
 std::ostream & Shell::out(){

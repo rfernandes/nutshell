@@ -24,8 +24,8 @@ private:
   friend class Visitor;
 
   void add(const Entry& entry);
-  const Line& forward(const Line& current);
-  const Line& backward(const Line& current);
+  const Line& forward();
+  const Line& backward();
 public:
   History();
 
@@ -38,7 +38,7 @@ public:
   std::experimental::string_view suggest(const Line& line) const;
 
   void commandExecute(const Line &line, Shell &shell) override;
-  void commandExecuted(const ParseResult &parseResult, Shell &shell) override;
+  void commandExecuted(const ParseResult &parseResult, const Line &line, Shell &shell) override;
   bool keyPress(unsigned int keystroke, Shell &shell) override;
 };
 
