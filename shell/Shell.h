@@ -22,7 +22,6 @@ public:
   void script(std::istream& in);
 
   void executeCommand(const LineBuffer& line);
-  ParseResult scriptExecuteCommand(const LineBuffer& line);
   void displayLine(const LineBuffer& line);
 
   void output(std::istream& string);
@@ -32,9 +31,8 @@ public:
   std::ostream& out();
 
 private:
+  ParseResult handleExecuteCommand(const LineBuffer& line);
   void prompt();
-
-  bool keyPress(unsigned key);
 
   Line _buffer;
   CommandStore& _commands;

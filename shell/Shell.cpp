@@ -68,7 +68,7 @@ void Shell::exit(){
   _exit = true;
 }
 
-ParseResult Shell::scriptExecuteCommand(const LineBuffer& line){
+ParseResult Shell::handleExecuteCommand(const LineBuffer& line){
   _buffer += line.line();
 
   const ParseResult executionResult {
@@ -88,7 +88,7 @@ ParseResult Shell::scriptExecuteCommand(const LineBuffer& line){
 void Shell::executeCommand(const LineBuffer& line){
   _out << '\n';
   _modules.commandExecute(line.line(), *this);
-  const auto executionResult = scriptExecuteCommand(line);
+  const auto executionResult = handleExecuteCommand(line);
   _modules.commandExecuted(executionResult, line.line(), *this);
   switch (executionResult.status()) {
     case Status::NoMatch:
@@ -111,30 +111,25 @@ void Shell::displayLine(const LineBuffer& line){
 }
 
 void Shell::prompt() {
-  // call Function "directly", instead of going through store
+  //TODO: call Function "directly", instead of going through store
   _function.parse(":prompt", _out, true);
   _column = _cursor.position().x;
 }
 
-// Interactive
 void Shell::interactive() {
   prompt();
 
   unsigned keystroke;
   while (!_exit && (keystroke = _in.get())) {
-    keyPress(keystroke);
+    _modules.keyPress(keystroke, *this);
   }
 }
 
 void Shell::script(istream& in) {
   string line;
   while (!_exit && getline(in, line)) {
-    scriptExecuteCommand(LineBuffer{line});
+    handleExecuteCommand(LineBuffer{line});
   }
-}
-
-bool Shell::keyPress(unsigned keystroke){
-  return _modules.keyPress(keystroke, *this);
 }
 
 std::ostream & Shell::out(){
