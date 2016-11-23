@@ -1,7 +1,9 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <algorithm>
 #include <string>
+#include <type_traits>
 
 namespace utf8{
 
@@ -31,6 +33,23 @@ namespace manip{
 
     friend std::ostream& operator<< (std::ostream& out, const repeat& manip);
   };
+}
+
+template <typename Enum>
+constexpr const char* enum_data[] {""};
+
+template <typename Data, typename Enum,
+          typename std::enable_if<std::is_enum<Enum>::value>* = nullptr>
+Data enum_cast(Enum from){
+  return enum_data<Enum>[static_cast<std::underlying_type_t<Enum>>(from)];
+}
+
+template <typename Data, typename Enum,
+          typename std::enable_if<std::is_enum<Enum>::value>* = nullptr>
+Enum enum_cast(const Data& from){
+  const auto& data{enum_data<Enum>};
+  const auto idx = std::find(std::begin(data), std::end(data), from);
+  return static_cast<Enum>(idx != std::end(data) ? idx: 0);
 }
 
 #endif

@@ -2,6 +2,7 @@
 #define COMMAND_H
 
 #include <shell/Line.h>
+#include <shell/Utils.h>
 #include <io/Output.h>
 
 #include <experimental/string_view>
@@ -29,7 +30,10 @@ struct Segment{
           std::string info = "");
 };
 
-const char* toString(Segment::Type type);
+template<>
+constexpr const char* enum_data<Segment::Type>[] {
+  "Unknown", "Command", "Builtin", "Function", "Parameter", "Argument", "String"
+};
 
 class ParseResult{
 public:

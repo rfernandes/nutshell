@@ -53,13 +53,13 @@ namespace {
               if (parameterIt != commandIt->second.second.end()){
                 ret.emplace_back(parameterIt->second);
               }else{
-                ret.emplace_back(string("unknown ") + toString(segment.type));
+                ret.emplace_back(string("unknown ") + enum_cast<const char *>(segment.type));
               }
             }
           }
         }else{
           for (const auto& segment: segments){
-            ret.emplace_back(string("unknown ") + toString(segment.type));
+            ret.emplace_back(string("unknown ") + enum_cast<const char*>(segment.type));
           }
         }
       }
