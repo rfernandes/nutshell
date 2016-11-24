@@ -14,7 +14,6 @@ command/Command.cpp
 command/Directory.cpp
 command/Executable.cpp
 command/Function.cpp
-command/Math.cpp
 command/Pid.cpp
 command/String.cpp
 command/Variable.cpp
