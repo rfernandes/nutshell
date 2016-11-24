@@ -8,7 +8,7 @@ add_definitions(
 -Wextra
 )
 
-add_executable(nutshell
+add_library(lnutshell STATIC
 command/BuiltIn.cpp
 command/Command.cpp
 command/Directory.cpp
@@ -20,7 +20,6 @@ command/Variable.cpp
 io/Cursor.cpp
 io/Input.cpp
 io/Output.cpp
-main.cpp
 shell/Assistive.cpp
 shell/History.cpp
 shell/LineBuffer.cpp
@@ -31,18 +30,27 @@ shell/Shell.cpp
 shell/Utils.cpp
 )
 
+add_executable(nutshell
+main.cpp
+)
+
 find_package(Boost COMPONENTS system REQUIRED QUIET)
 
-target_include_directories(nutshell
-PRIVATE
+target_include_directories(lnutshell
+PUBLIC
 ${CMAKE_SOURCE_DIR}
 ${Boost_INCLUDE_DIRS}
 )
 
+target_link_libraries(lnutshell
+stdc++fs
+
+${Boost_LIBRARIES}
+)
 
 target_link_libraries(nutshell
-stdc++fs
-${Boost_LIBRARIES}
+-Wl,-whole-archive lnutshell
+-Wl,-no-whole-archive
 )
 
 install(TARGETS nutshell RUNTIME DESTINATION bin)
