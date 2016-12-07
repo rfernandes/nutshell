@@ -2,6 +2,7 @@
 #define UTILS_H
 
 #include <algorithm>
+#include <cstring>
 #include <string>
 #include <type_traits>
 
@@ -36,20 +37,24 @@ namespace manip{
 }
 
 template <typename Enum>
-constexpr const char* enum_data[] {""};
+constexpr const char* enum_data[] {nullptr};
 
 template <typename Data, typename Enum,
-          typename std::enable_if<std::is_enum<Enum>::value>* = nullptr>
-Data enum_cast(Enum from){
+          typename std::enable_if<std::is_enum<Enum>::value>::type* = nullptr>
+constexpr Data enum_cast(Enum from){
+  static_assert(enum_data<Enum>[0], "Missing specialization of enum_data for Enum type");
   return enum_data<Enum>[static_cast<std::underlying_type_t<Enum>>(from)];
 }
 
-template <typename Data, typename Enum,
-          typename std::enable_if<std::is_enum<Enum>::value>* = nullptr>
+template <typename Enum, typename Data,
+          typename std::enable_if<std::is_enum<Enum>::value>::type* = nullptr>
 Enum enum_cast(const Data& from){
+  static_assert(enum_data<Enum>[0], "Missing specialization of enum_data for Enum type");
   const auto& data{enum_data<Enum>};
-  const auto idx = std::find(std::begin(data), std::end(data), from);
-  return static_cast<Enum>(idx != std::end(data) ? idx: 0);
+  const auto idx = std::find_if(std::begin(data), std::end(data), [from](auto data){
+    return !std::strcmp(data, from);
+  });
+  return static_cast<Enum>(0);
 }
 
 #endif
