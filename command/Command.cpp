@@ -16,7 +16,7 @@ CommandStore& CommandStore::instance() {
 namespace {
   string_view make_view(string::const_iterator begin,
                         string::const_iterator end){
-    return {&*begin, distance(begin, end)};
+    return {&*begin, static_cast<size_t>(distance(begin, end))};
   }
 }
 

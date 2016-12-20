@@ -23,6 +23,34 @@ namespace parser
       desc.segments().emplace_back(Type, first, last);
     }
   };
+
+  template<typename RuleTrait>
+  class RuleCommand: public Command{
+  protected:
+    virtual void execute(typename RuleTrait::Data& data, Output& output) = 0;
+
+  public:
+    ParseResult parse(const Line& line, Output& output, bool exec) override{
+      namespace x3 = boost::spirit::x3;
+      auto iter = line.begin();
+      const auto &endIter = line.end();
+
+      ParseResult desc;
+      const auto parser = x3::with<ParseResult>(boost::ref(desc))[RuleTrait::rule()];
+
+      typename RuleTrait::Data data;
+      const bool ok {x3::phrase_parse(iter, endIter, parser, x3::space, data)};
+
+      if (ok){
+        desc.status(Status::Ok);
+        if (exec){
+          execute(data, output);
+        }
+      }
+
+      return desc;
+    }
+  };
 }
 
 #endif

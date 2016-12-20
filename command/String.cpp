@@ -1,6 +1,7 @@
 #include "String.h"
 
-#include <command/Parser.h>
+#include <command/StringGrammar.h>
+#include <command/VariableGrammar.h>
 
 #include <boost/spirit/home/x3.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
@@ -10,58 +11,58 @@ using namespace std::experimental;
 
 namespace x3 = boost::spirit::x3;
 
-namespace {
+namespace parser{
   const auto escape_code = [](auto &ctx) {
     char escape;
-    switch (x3::_attr(ctx)) {
+    switch (char ch = x3::_attr(ctx)) {
       case 'e': escape = '\x1b'; break;
       case 't': escape = '\t'; break;
       case 'n': escape = '\n'; break;
       case 'r': escape = '\r'; break;
       case 'v': escape = '\v'; break;
       case 'a': escape = '\a'; break;
-      default:  return;                // Use original letter (escape was not required)
+      default:  escape = ch; break;                // Use original letter (escape was not required)
     }
     x3::_val(ctx) = escape;
   };
 
+  const auto escape_code2 = [](auto &ctx) {
+    const string asd = x3::_attr(ctx);
+    cout << " Replace with value when appropriate >" << asd << "<\n";
+  };
+
   struct escape_class {};
-  struct command_class: parser::type_annotation<Segment::Type::String>{};
+  struct var_class{};
 
   using escape_type = x3::rule<escape_class, char>;
-  using command_type = x3::rule<command_class, string>;
+  using var_type = x3::rule<var_class, string>;
 
   const escape_type escape = "escape";
-  const command_type command = "command";
+  const var_type var = "var";
+  const string_type string = "command";
 
   const auto escape_def = '\\' >> x3::char_[escape_code];
-  const auto command_def =
-    ('"' >> x3::no_skip[ * (escape | ~x3::char_('"'))] >> '"') |
-    ('\'' >> x3::no_skip[ * (~x3::char_('\''))] >> '\'');
+  const auto var_def = x3::lexeme['$' >> (x3::alpha >> *x3::alnum)];
+
+  const auto string_def =
+    x3::lexeme['"' >> *(x3::raw[escape] | var | x3::raw[~x3::char_('"')] ) >> '"'] |
+    x3::lexeme['\'' >> *~x3::char_('\'') >> '\''];
 
   BOOST_SPIRIT_DEFINE(
     escape,
-    command
+    var,
+    string
   )
 }
 
-ParseResult String::parse(const Line& line, Output& output, bool execute){
-  auto iter = line.begin();
-  auto endIter = line.end();
+const StringTrait::Rule & StringTrait::rule(){
+  return parser::string;
+}
 
-  ParseResult desc;
-  const auto parser = x3::with<ParseResult>(ref(desc))[command];
-
-  string data;
-  const bool ok {x3::phrase_parse(iter, endIter, parser, x3::space, data)};
-
-  if (ok) {
-    desc.status(Status::Ok);
-    if (execute) {
-      output << data;
-    }
+void String::execute(typename StringTrait::Data& data, Output& output){
+  for (const auto &a: data){
+    output << a;
   }
-  return desc;
 }
 
 namespace {

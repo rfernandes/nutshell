@@ -1,7 +1,7 @@
 #include "Directory.h"
 
 #include <command/BuiltIn.h>
-#include <command/Parser.h>
+#include <command/DirectoryGrammar.h>
 
 #include <boost/spirit/home/x3.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
@@ -13,52 +13,32 @@ using namespace std::experimental::filesystem;
 
 namespace x3 = boost::spirit::x3;
 
-namespace ast {
-  using path = std::string;
-
-  struct previous{};
-  struct next{};
-
-  struct functions: x3::variant<previous, next, string>{
-    using base_type::base_type;
-    using base_type::operator=;
-  };
-
-  struct CdCommand{
-    boost::optional<functions> parameters;
-  };
-}
-
-BOOST_FUSION_ADAPT_STRUCT(ast::CdCommand, parameters)
-
-namespace {
+namespace parser {
   struct previous_class: parser::type_annotation<Segment::Type::Function>{};
   struct next_class: parser::type_annotation<Segment::Type::Function>{};
   struct path_class: parser::type_annotation<Segment::Type::Parameter> {};
   struct functions_class{};
   struct commandName_class: parser::type_annotation<Segment::Type::Builtin>{};
-  struct command_class{};
 
   using previous_type = x3::rule<previous_class, ast::previous>;
   using next_type = x3::rule<next_class, ast::next>;
   using path_type = x3::rule<path_class, ast::path>;
   using functions_type = x3::rule<functions_class, ast::functions>;
   using commandName_type = x3::rule<commandName_class>;
-  using command_type = x3::rule<command_class, ast::CdCommand>;
 
   const previous_type previous = "previous";
   const next_type next = "next";
   const path_type pathParam = "path";
   const functions_type functions = "functions";
   const commandName_type commandName = "commandName";
-  const command_type command = "command";
+  const directory_type directory = "directory";
 
   auto previous_def = '-' >> x3::attr(ast::previous{});
   auto next_def = "+" >> x3::attr(ast::next{});
   auto pathParam_def = +x3::char_;
   auto functions_def = previous | next | pathParam;
   auto commandName_def = "cd";
-  auto command_def = commandName >> -functions;
+  auto directory_def = commandName >> -functions;
 
   BOOST_SPIRIT_DEFINE(
     previous,
@@ -66,7 +46,7 @@ namespace {
     pathParam,
     functions,
     commandName,
-    command
+    directory
   )
 }
 
@@ -113,43 +93,31 @@ Cd::Cd()
                                });
 }
 
-ParseResult Cd::parse(const Line& line, Output& /*output*/, bool execute){
-  auto iter = line.begin();
-  const auto& endIter = line.end();
+Cd::~Cd() = default;
 
+void Cd::execute(typename CdTrait::Data& data, Output& output){
+  path target {data.parameters ? boost::apply_visitor(CdVisitor{*this}, data.parameters.get())
+                              : _home};
 
-  ParseResult desc;
-  const auto parser = x3::with<ParseResult>(ref(desc))[command];
+  // FIXME: this also resolves symlinks, which we do not want
+  target = canonical(target);
 
-  ast::CdCommand data;
-  bool ok {x3::phrase_parse(iter, endIter, parser, x3::space, data)};
+  error_code error;
+  current_path(target, error);
 
-  if (!ok) return desc;
-
-  desc.status(Status::Ok);
-
-  if (execute){
-    path target {data.parameters ? boost::apply_visitor(CdVisitor{*this}, data.parameters.get())
-                                : _home};
-
-    // FIXME: this also resolves symlinks, which we do not want
-    target = canonical(target);
-
-    error_code error;
-    current_path(target, error);
-
-    if (error) { // TODO: use throwing version instead
-      throw std::runtime_error("Error while running cd");
-    }
-
-    _current = target;
-    if (_idx == _history.size()  - 1){
-      _idx = _history.size();
-      _history.emplace_back(target);
-    }
+  if (error) { // TODO: use throwing version instead
+    throw std::runtime_error("Error while running cd");
   }
 
-  return desc;
+  _current = target;
+  if (_idx == _history.size()  - 1){
+    _idx = _history.size();
+    _history.emplace_back(target);
+  }
+}
+
+const CdTrait::Rule& CdTrait::rule(){
+  return parser::directory;
 }
 
 const path& Cd::cwd() const {

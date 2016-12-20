@@ -1,7 +1,6 @@
 #ifndef SHELL_H
 #define SHELL_H
 
-#include <command/Directory.h>
 #include <command/Function.h>
 #include <io/Cursor.h>
 #include <io/Input.h>
@@ -13,6 +12,7 @@
 class CommandStore;
 class ModuleStore;
 class History;
+class Cd;
 
 class Shell {
 public:

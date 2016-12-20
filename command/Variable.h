@@ -1,16 +1,28 @@
 #ifndef VARIABLE_H
 #define VARIABLE_H
 
-#include <command/Command.h>
+#include <command/Parser.h>
+#include <command/VariableGrammar.h>
+
+#include <boost/spirit/home/x3.hpp>
 
 #include <unordered_map>
 
-class Variable: public Command{
+struct VariableTrait{
+  using Rule = parser::variable_type;
+  using Data = ast::Variables;
+
+  static const Rule& rule();
+};
+
+class Variable: public parser::RuleCommand<VariableTrait>{
+
+  void execute(typename VariableTrait::Data& data, Output& output) override;
 public:
   using Store = std::unordered_map<std::string, std::string>;
 
   Variable();
-  ParseResult parse(const Line& line, Output& output, bool execute) override;
+  ~Variable() override;
 
 private:
   friend class VariableVisitor;

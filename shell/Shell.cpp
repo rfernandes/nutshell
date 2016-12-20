@@ -2,6 +2,7 @@
 
 #include <command/BuiltIn.h>
 #include <command/Command.h>
+#include <command/Directory.h>
 #include <shell/History.h>
 #include <shell/Utils.h>
 #include <shell/Module.h>

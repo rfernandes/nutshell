@@ -1,13 +1,19 @@
 #ifndef STRING_H
 #define STRING_H
 
-#include <command/Command.h>
+#include <command/Parser.h>
+#include <command/StringGrammar.h>
 
-class String: public Command{
-  friend class StringVisitor;
+struct StringTrait{
+  using Rule = parser::string_type;
+  using Data = ast::String;
 
+  static const Rule& rule();
+};
+
+class String: public parser::RuleCommand<StringTrait>{
 public:
-  ParseResult parse(const Line& line, Output& output, bool execute) override;
+  void execute(typename StringTrait::Data& data, Output& output) override;
 };
 
 #endif

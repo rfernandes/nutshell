@@ -1,4 +1,6 @@
 #include "Variable.h"
+#include "VariableGrammar.h"
+#include "Config.h"
 
 #include <command/Parser.h>
 
@@ -7,95 +9,19 @@
 
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
 
+#include "Config.h"
+
 using namespace std;
 using namespace std::experimental;
 
 namespace x3 = boost::spirit::x3;
 
-namespace ast {
-  struct sync{};
-  struct remove{};
-  struct assign{
-    string value;
-  };
-
-  struct list{};
-
-  struct functions: x3::variant<remove, sync, assign>
-  {
-    using base_type::base_type;
-    using base_type::operator=;
-  };
-
-  struct Variable {
-    string name;
-    boost::optional<functions> function;
-  };
-
-  struct Variables: x3::variant<Variable, list>
-  {
-    using base_type::base_type;
-    using base_type::operator=;
-  };
-}
-
-BOOST_FUSION_ADAPT_STRUCT(ast::Variable, name, function)
-BOOST_FUSION_ADAPT_STRUCT(ast::assign, value)
+// The generic parser lost the ability add a semantic action to check if variable exists
+//     auto matcher = [&](auto &ctx){
+//       return match_name(ctx, _variables);
+//     };
 
 namespace {
-
-  struct sync_class: parser::type_annotation<Segment::Type::Function> {};
-  struct remove_class: parser::type_annotation<Segment::Type::Function> {};
-  struct list_class: parser::type_annotation<Segment::Type::Function> {};
-  struct variableValue_class: parser::type_annotation<Segment::Type::String> {};
-  struct assign_class;
-  struct functions_class {};
-  struct variableName_class: parser::type_annotation<Segment::Type::Command> {};
-  struct sigil_class: parser::type_annotation<Segment::Type::Builtin>{};
-  struct command_class{};
-
-  using sync_type = x3::rule<sync_class, ast::sync>;
-  using remove_type = x3::rule<remove_class, ast::remove>;
-  using list_type = x3::rule<list_class, ast::list>;
-  using variableValue_type = x3::rule<variableValue_class, string>;
-  using assign_type = x3::rule<assign_class, ast::assign>;
-  using functions_type = x3::rule<functions_class, ast::functions>;
-  using variableName_type = x3::rule<variableName_class, string>;
-  using sigil_type = x3::rule<sigil_class>;
-  using command_type = x3::rule<command_class, ast::Variables>;
-
-  const sync_type sync = "sync";
-  const remove_type remove = "remove";
-  const list_type list = "list";
-  const variableValue_type variableValue = "variableValue";
-  const assign_type assign = "assign";
-  const functions_type functions = "functions";
-  const variableName_type variableName = "variableName";
-  const sigil_type sigil = "sigil";
-  const command_type command = "command";
-
-  auto sync_def = ".sync" >> x3::attr(ast::sync{});
-  auto remove_def = ".remove" >> x3::attr(ast::remove{});
-  auto list_def = ".list" >> x3::attr(ast::list{});
-  auto variableValue_def = '"' >> x3::no_skip[+~x3::char_('"')] >> '"' | +~x3::char_(' ');
-  auto assign_def = '=' >> variableValue;
-  auto functions_def = remove | sync | assign;
-  auto variableName_def = x3::no_skip[ x3::alpha >> *x3::alnum ];
-  auto sigil_def = '$';
-  auto command_def = sigil >> ((variableName >> -functions) | list);
-
-  BOOST_SPIRIT_DEFINE(
-    sync,
-    remove,
-    list,
-    variableValue,
-    assign,
-    functions,
-    variableName,
-    sigil,
-    command
-  )
-
   const auto match_name = [](auto &ctx, Variable::Store& variables) {
     const ast::Variables& data = x3::_attr(ctx);
     const auto* variable = boost::get<ast::Variable>(&data);
@@ -106,6 +32,63 @@ namespace {
     }
   };
 }
+
+
+namespace parser {
+
+  struct sync_class: parser::type_annotation<Segment::Type::Function> {};
+  struct remove_class: parser::type_annotation<Segment::Type::Function> {};
+  struct list_class: parser::type_annotation<Segment::Type::Function> {};
+  struct variableValue_class: parser::type_annotation<Segment::Type::String> {};
+  struct assign_class;
+  struct functions_class {};
+  struct variableName_class: parser::type_annotation<Segment::Type::Command> {};
+  struct sigil_class: parser::type_annotation<Segment::Type::Builtin>{};
+
+  using sync_type = x3::rule<sync_class, ast::sync>;
+  using remove_type = x3::rule<remove_class, ast::remove>;
+  using list_type = x3::rule<list_class, ast::list>;
+  using variableValue_type = x3::rule<variableValue_class, string>;
+  using assign_type = x3::rule<assign_class, ast::assign>;
+  using functions_type = x3::rule<functions_class, ast::functions>;
+  using variableName_type = x3::rule<variableName_class, string>;
+  using sigil_type = x3::rule<sigil_class>;
+
+  const sync_type sync = "sync";
+  const remove_type remove = "remove";
+  const list_type list = "list";
+  const variableValue_type variableValue = "variableValue";
+  const assign_type assign = "assign";
+  const functions_type functions = "functions";
+  const variableName_type variableName = "variableName";
+  const sigil_type sigil = "sigil";
+  const variable_type variable = "variable";
+
+  auto sync_def = ".sync" >> x3::attr(ast::sync{});
+  auto remove_def = ".remove" >> x3::attr(ast::remove{});
+  auto list_def = ".list" >> x3::attr(ast::list{});
+  auto variableValue_def = '"' >> x3::no_skip[+~x3::char_('"')] >> '"' | +~x3::char_(' ');
+  auto assign_def = '=' >> variableValue;
+  auto functions_def = remove | sync | assign;
+  auto variableName_def = x3::no_skip[ x3::alpha >> *x3::alnum ];
+  auto sigil_def = '$';
+  auto variable_def = sigil >> ((variableName >> -functions) | list);
+
+  BOOST_SPIRIT_DEFINE(
+    sync,
+    remove,
+    list,
+    variableValue,
+    assign,
+    functions,
+    variableName,
+    sigil,
+    variable
+  )
+
+  BOOST_SPIRIT_INSTANTIATE(variable_type, iterator_type, context_type)
+}
+
 
 class VariableVisitor {
   Variable &_variable;
@@ -152,29 +135,15 @@ Variable::Variable()
 {
 }
 
-ParseResult Variable::parse(const Line& line, Output& output, bool execute){
-  auto iter = line.begin();
-  auto endIter = line.end();
+Variable::~Variable() = default;
 
-  ast::Variables data;
-  ParseResult desc;
-  const auto parser = x3::with<ParseResult>(ref(desc))[command];
+const VariableTrait::Rule& VariableTrait::rule(){
+  return parser::variable;
+}
 
-  auto matcher = [&](auto &ctx){
-    return match_name(ctx, _variables);
-  };
-
-  const bool ok {x3::phrase_parse(iter, endIter, parser[matcher], x3::space, data)};
-
-  if (ok){
-    desc.status(Status::Ok);
-    if (execute){
-      VariableVisitor visitor{*this, output};
-      boost::apply_visitor(visitor, data);
-    }
-  }
-
-  return desc;
+void Variable::execute(typename VariableTrait::Data& data, Output& output){
+  VariableVisitor visitor{*this, output};
+  boost::apply_visitor(visitor, data);
 }
 
 namespace {

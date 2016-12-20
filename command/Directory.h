@@ -1,11 +1,18 @@
 #ifndef DIRECTORY_H
 #define DIRECTORY_H
 
-#include <command/Command.h>
+#include <command/DirectoryGrammar.h>
 
 #include <experimental/filesystem>
 
-class Cd: public Command {
+struct CdTrait{
+  using Rule = parser::directory_type;
+  using Data = ast::CdCommand;
+
+  static const Rule& rule();
+};
+
+class Cd: public parser::RuleCommand<CdTrait> {
   using path = std::experimental::filesystem::path;
 
   path _current;
@@ -17,8 +24,11 @@ class Cd: public Command {
 
 public:
   Cd();
+  ~Cd() override;
 
-  ParseResult parse(const Line& line, Output& output, bool execute) override;
+  void execute(typename CdTrait::Data & data, Output & output) override;
+
+//   ParseResult parse(const Line& line, Output& output, bool execute) override;
 
   Status cd(const Line& parameters, Output& curses);
 
