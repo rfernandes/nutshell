@@ -49,8 +49,6 @@ public:
 
   using Modules = std::vector<std::unique_ptr<Module>>;
 
-  static const Modules& modules();
-
   void initialize();
 
   bool keyPress(unsigned int keystroke, Shell & shell) override;

@@ -11,7 +11,7 @@ class Predictive: public Module{
   Suggestion _suggestion;
   History &_history;
 public:
-  Predictive(History& history);
+  explicit Predictive(History& history);
 
   void lineUpdated(const ParseResult& parseResult, const LineBuffer& line, Shell &shell) override;
   bool keyPress(unsigned int keystroke, Shell &shell) override;

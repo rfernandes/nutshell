@@ -39,10 +39,6 @@ void ModuleStore::initialize(){
   }
 }
 
-const ModuleStore::Modules& ModuleStore::modules(){
-  return instance()._modules;
-}
-
 bool ModuleStore::keyPress(unsigned int keystroke, Shell& shell) {
   bool handledKey{false};
   for (auto &module: _modules){

@@ -35,7 +35,8 @@ const std::string& LineBuffer::line() const{
 }
 
 string_view LineBuffer::firstWord() const{
-  return string_view{_line};
+  const auto idx = _line.find_first_of(' ');
+  return string_view{_line.data(), idx == string::npos ? _line.size(): idx};
 }
 
 void LineBuffer::line(const std::string& line){

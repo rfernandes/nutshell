@@ -8,7 +8,7 @@
 class Function: public Command {
 public:
   using Functions = std::unordered_map<std::string, std::string>;
-  Function(Functions functions);
+  explicit Function(Functions functions);
 
   ParseResult parse(const Line& line, Output& output, bool execute) override;
 

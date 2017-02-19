@@ -30,19 +30,6 @@ Segment::Segment(Segment::Type type,
 {
 }
 
-const char * toString(Segment::Type type){
-  const char * data[]{"unknown",
-                      "command",
-                      "builtin",
-                      "function",
-                      "parameter",
-                      "argument",
-                      "string"};
-  return data[static_cast<underlying_type_t<Segment::Type>>(type)];
-}
-
-
-
 ParseResult CommandStore::parse(const Line& line, Output& output, bool execute) {
   ParseResult descDefault;
   for (const auto& command: _commands) {

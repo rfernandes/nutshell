@@ -10,7 +10,7 @@ class Executable: public Command {
   const std::set<std::string> _paths;
 
 public:
-  Executable(std::set<std::string> paths);
+  explicit Executable(std::set<std::string> paths);
 
   ParseResult parse(const Line& line, Output& output, bool execute) override;
 };

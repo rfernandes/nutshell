@@ -33,6 +33,7 @@ Shell::Shell()
       "\"feed: \""}
     })}
 , _exit{false}
+, _column{0}
 {
   setlocale(LC_ALL, "");
 

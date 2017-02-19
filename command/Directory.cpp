@@ -74,7 +74,7 @@ class CdVisitor {
   Cd& cd;
 
 public:
-  CdVisitor(Cd& cd): cd(cd){}
+  explicit CdVisitor(Cd& cd): cd(cd){}
 
   path operator()(const ast::previous&) const {
     if (cd._idx > 0) {

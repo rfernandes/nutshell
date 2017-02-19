@@ -27,7 +27,7 @@ public:
     Delete,
   };
 
-  Input(std::istream &in);
+  explicit Input(std::istream &in);
   ~Input();
 
   unsigned get();
