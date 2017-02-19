@@ -1,6 +1,7 @@
 add_executable(nutshellTest
 CursorCase.cpp
 InputCase.cpp
+LineBufferCase.cpp
 UtilsCase.cpp
 )
 
