@@ -187,11 +187,11 @@ ParseResult HistoryCommand::parse(const Line& line, Output& output, bool execute
   return desc;
 }
 
-void History::commandExecute(const Line& /*line*/, Shell& /*shell*/){
+void History::commandExecute(const Line& /*line*/){
   _startTime = std::chrono::system_clock::now();
 }
 
-void History::commandExecuted(const ParseResult& /*parseResult*/, const Line &line, Shell& /*shell*/){
+void History::commandExecuted(const ParseResult& /*parseResult*/, const Line &line){
   const auto endTime = std::chrono::system_clock::now();
   // FIXME: Capture correct return status
   const Entry entry{line, 0, _startTime, endTime};

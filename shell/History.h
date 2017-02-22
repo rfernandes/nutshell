@@ -37,8 +37,8 @@ public:
 
   std::experimental::string_view suggest(const Line& line) const;
 
-  void commandExecute(const Line &line, Shell &shell) override;
-  void commandExecuted(const ParseResult &parseResult, const Line &line, Shell &shell) override;
+  void commandExecute(const Line &line) override;
+  void commandExecuted(const ParseResult &parseResult, const Line &line) override;
   bool keyPress(unsigned int keystroke, Shell &shell) override;
 };
 

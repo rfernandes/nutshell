@@ -90,9 +90,9 @@ ParseResult Shell::handleExecuteCommand(const LineBuffer& line){
 
 void Shell::executeCommand(const LineBuffer& line){
   _out << '\n';
-  _modules.commandExecute(line.line(), *this);
+  _modules.commandExecute(line.line());
   const auto executionResult = handleExecuteCommand(line);
-  _modules.commandExecuted(executionResult, line.line(), *this);
+  _modules.commandExecuted(executionResult, line.line());
   switch (executionResult.status()) {
     case Status::NoMatch:
       _out << "Command not found [" << line.firstWord() << "]\n";
