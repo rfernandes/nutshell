@@ -59,8 +59,17 @@ namespace {
   };
 }
 
-Function::Function(Functions functions)
-: _functions{move(functions)}
+Function::Function()
+: _functions{
+  { ":prompt",
+    "\"\x1b[38;2;230;120;150mNutshell\x1b[0m├─┤\x1b[38;2;120;150;230m\"\n"
+    ":cwd\n"
+    "\"\x1b[0m│ \""},
+  { ":prompt2",
+    "date"},
+  { ":prompt_feed",
+    "\"feed: \""}
+  }
 {}
 
 ParseResult Function::parse(const Line& line, Output& output, bool execute){

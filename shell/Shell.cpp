@@ -21,17 +21,7 @@ Shell::Shell()
 , _out{cout}
 , _cursor{cin, cout}
 , _cd{CommandStore::store<Cd>()}
-, _function{
-    CommandStore::store<Function>(std::unordered_map<string, string>{
-    { ":prompt",
-      "\"\x1b[38;2;230;120;150mNutshell\x1b[0m├─┤\x1b[38;2;120;150;230m\"\n"
-      ":cwd\n"
-      "\"\x1b[0m│ \""},
-    { ":prompt2",
-      "date"},
-    { ":prompt_feed",
-      "\"feed: \""}
-    })}
+, _function{CommandStore::store<Function>()}
 , _exit{false}
 , _column{0}
 {
