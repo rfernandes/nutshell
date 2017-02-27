@@ -1,8 +1,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include <command/Command.h>
-
 #include <boost/spirit/home/x3.hpp>
 
 namespace parser{

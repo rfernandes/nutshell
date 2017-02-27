@@ -1,9 +1,9 @@
 #ifndef LINEBUFFER_H
 #define LINEBUFFER_H
 
+#include <core/Module.h>
 #include <io/Cursor.h>
 #include <shell/Line.h>
-#include <shell/Module.h>
 
 class LineBuffer: public Module{
   std::string _line;

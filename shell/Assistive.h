@@ -1,7 +1,7 @@
 #ifndef ASSISTIVE_H
 #define ASSISTIVE_H
 
-#include <shell/Module.h>
+#include <core/Module.h>
 
 class Assistive: public Module{
   bool _active;

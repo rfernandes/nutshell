@@ -2,7 +2,7 @@
 #define PREDICTIVE_H
 
 #include <shell/Line.h>
-#include <shell/Module.h>
+#include <core/Module.h>
 
 class History;
 

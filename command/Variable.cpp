@@ -1,15 +1,13 @@
 #include "Variable.h"
 #include "VariableGrammar.h"
-#include "Config.h"
 
+#include <command/Config.h>
 #include <command/Parser.h>
 
 #include <boost/spirit/home/x3.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
 
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
-
-#include "Config.h"
 
 using namespace std;
 using namespace std::experimental;

@@ -1,7 +1,7 @@
 #ifndef BUILTIN_H
 #define BUILTIN_H
 
-#include <command/Command.h>
+#include <core/Command.h>
 
 #include <functional>
 

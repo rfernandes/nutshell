@@ -1,6 +1,6 @@
 #include <boost/test/unit_test.hpp>
 
-#include <shell/Utils.h>
+#include <core/Utils.h>
 
 #include <sstream>
 

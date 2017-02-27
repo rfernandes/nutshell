@@ -1,7 +1,7 @@
 #ifndef EXECUTABLE_H
 #define EXECUTABLE_H
 
-#include <command/Command.h>
+#include <core/Command.h>
 
 #include <set>
 #include <experimental/filesystem>

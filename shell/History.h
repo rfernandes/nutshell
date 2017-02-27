@@ -1,9 +1,9 @@
 #ifndef HISTORY_H
 #define HISTORY_H
 
-#include <command/Command.h>
+#include <core/Command.h>
+#include <core/Module.h>
 #include <shell/Line.h>
-#include <shell/Module.h>
 
 #include <chrono>
 #include <experimental/string_view>

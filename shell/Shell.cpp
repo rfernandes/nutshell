@@ -1,11 +1,11 @@
 #include "Shell.h"
 
-#include <command/BuiltIn.h>
-#include <command/Command.h>
 #include <command/Directory.h>
+#include <core/Utils.h>
+#include <core/Module.h>
+#include <core/BuiltIn.h>
+#include <core/Command.h>
 #include <shell/History.h>
-#include <shell/Utils.h>
-#include <shell/Module.h>
 
 #include <algorithm>
 #include <experimental/string_view>

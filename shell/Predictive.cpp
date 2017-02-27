@@ -1,6 +1,6 @@
 #include "Predictive.h"
 
-#include <command/BuiltIn.h>
+#include <core/BuiltIn.h>
 #include <io/Output.h>
 #include <shell/History.h>
 #include <shell/Shell.h>

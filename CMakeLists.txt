@@ -9,25 +9,25 @@ add_definitions(
 )
 
 add_library(lnutshell STATIC
-command/BuiltIn.cpp
-command/Command.cpp
 command/Directory.cpp
 command/Executable.cpp
 command/Function.cpp
 command/Pid.cpp
 command/String.cpp
 command/Variable.cpp
+core/BuiltIn.cpp
+core/Command.cpp
+core/Module.cpp
+core/Utils.cpp
 io/Cursor.cpp
 io/Input.cpp
 io/Output.cpp
 shell/Assistive.cpp
 shell/History.cpp
 shell/LineBuffer.cpp
-shell/Module.cpp
 shell/Path.cpp
 shell/Predictive.cpp
 shell/Shell.cpp
-shell/Utils.cpp
 )
 
 add_executable(nutshell

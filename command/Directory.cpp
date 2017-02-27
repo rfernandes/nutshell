@@ -1,7 +1,7 @@
 #include "Directory.h"
 
-#include <command/BuiltIn.h>
 #include <command/DirectoryGrammar.h>
+#include <core/BuiltIn.h>
 
 #include <boost/spirit/home/x3.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>

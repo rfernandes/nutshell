@@ -1,8 +1,8 @@
 #ifndef COMMAND_H
 #define COMMAND_H
 
+#include <core/Utils.h>
 #include <shell/Line.h>
-#include <shell/Utils.h>
 #include <io/Output.h>
 
 #include <experimental/string_view>

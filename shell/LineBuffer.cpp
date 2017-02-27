@@ -1,8 +1,8 @@
 #include "LineBuffer.h"
 
+#include <core/Utils.h>
 #include <io/Input.h>
 #include <shell/Shell.h>
-#include <shell/Utils.h>
 
 #include <algorithm>
 

@@ -1,10 +1,10 @@
 #include "Assistive.h"
 
-#include <command/BuiltIn.h>
+#include <core/BuiltIn.h>
+#include <core/Utils.h>
 #include <io/Output.h>
 #include <shell/Shell.h>
 #include <shell/History.h>
-#include <shell/Utils.h>
 
 #include <experimental/filesystem>
 #include <experimental/string_view>

@@ -1,7 +1,7 @@
 #ifndef FUNCTION_H
 #define FUNCTION_H
 
-#include <command/Command.h>
+#include <core/Command.h>
 
 #include <unordered_map>
 
