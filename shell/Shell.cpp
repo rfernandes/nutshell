@@ -63,19 +63,8 @@ void Shell::exit(){
 }
 
 ParseResult Shell::handleExecuteCommand(const LineBuffer& line){
-  _buffer += line.line();
-
   const ParseResult executionResult {
-    _commands.parse(_buffer, _out, true)};
-
-  switch (executionResult.status()) {
-    case Status::Incomplete:
-      _buffer += '\n';
-      break;
-    default:
-      _buffer.clear();
-      break;
-  }
+    _commands.parse(line.line(), _out, true)};
   return executionResult;
 }
 

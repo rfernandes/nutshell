@@ -30,14 +30,24 @@ public:
   bool initialize(Module &module) override;
 };
 
+template <typename TypeT>
+struct Priority{
+  short priority{10};
+  std::unique_ptr<TypeT> instance;
+
+  bool operator < (const Priority<TypeT>& other) const{
+    return priority < other.priority;
+  }
+};
+
 class ModuleStore: public Module{
 public:
 
-  template<typename ModuleT, typename ...Args>
+  template<typename ModuleT, short Priority = 10, typename ...Args>
   static ModuleT& store(Args&& ...args) {
     auto &modules = instance()._modules;
-    modules.push_back(std::make_unique<ModuleT>(std::forward<Args>(args)...));
-    return *static_cast<ModuleT*>(modules.back().get());
+    modules.push_back({Priority, std::make_unique<ModuleT>(std::forward<Args>(args)...)});
+    return *static_cast<ModuleT*>(modules.back().instance.get());
   }
 
   template<typename ModuleT, typename DependencyT, typename ...Args>
@@ -47,7 +57,7 @@ public:
     return *static_cast<ModuleDependency<ModuleT, DependencyT>*>(_dependency.back().get());
   }
 
-  using Modules = std::vector<std::unique_ptr<Module>>;
+  using Modules = std::vector<Priority<Module>>;
 
   void initialize();
 

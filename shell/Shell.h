@@ -34,7 +34,6 @@ private:
   ParseResult handleExecuteCommand(const LineBuffer& line);
   void prompt();
 
-  Line _buffer;
   CommandStore& _commands;
   ModuleStore& _modules;
   Input _in;

@@ -27,6 +27,8 @@ public:
   std::experimental::string_view firstWord() const;
 
   bool keyPress(unsigned int keystroke, Shell & shell) override;
+  void commandExecuted(const ParseResult & parseResult, const Line & line) override;
+  void lineUpdated(const ParseResult & parseResult, const LineBuffer & line, Shell & shell) override;
 };
 
 #endif

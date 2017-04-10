@@ -1,5 +1,9 @@
 #include "Module.h"
 
+#include <algorithm>
+
+using namespace std;
+
 Module::~Module(){
 }
 
@@ -30,19 +34,20 @@ void ModuleStore::initialize(){
     //FIXME: This will loop forever on double-dependencies
     for (auto& dependency: _dependency){
       for (auto& module: _modules){
-        if (dependency->initialize(*module)){
+        if (dependency->initialize(*module.instance)){
           --size;
         }
       }
     }
     prevSize = size;
   }
+  sort(begin(_modules), end(_modules));
 }
 
 bool ModuleStore::keyPress(unsigned int keystroke, Shell& shell) {
   bool handledKey{false};
   for (auto &module: _modules){
-    if (module->keyPress(keystroke, shell)) {
+    if (module.instance->keyPress(keystroke, shell)) {
       handledKey = true;
       break;
     }
@@ -52,19 +57,19 @@ bool ModuleStore::keyPress(unsigned int keystroke, Shell& shell) {
 
 void ModuleStore::lineUpdated(const ParseResult& parseResult, const LineBuffer& line, Shell& shell) {
   for (auto &module: _modules){
-    module->lineUpdated(parseResult, line, shell);
+    module.instance->lineUpdated(parseResult, line, shell);
   }
 }
 
 
 void ModuleStore::commandExecute(const Line& line) {
   for (auto &module: _modules){
-    module->commandExecute(line);
+    module.instance->commandExecute(line);
   }
 }
 
 void ModuleStore::commandExecuted(const ParseResult& parseResult, const Line& line) {
   for (auto &module: _modules){
-    module->commandExecuted(parseResult, line);
+    module.instance->commandExecuted(parseResult, line);
   }
 }
