@@ -10,13 +10,15 @@ using namespace std;
 using namespace std::experimental;
 
 namespace {
-  auto lineBuffer = ModuleStore::store<LineBuffer>();
+  // Lower priority since LineBuffer consumes all non parsed keyPresses
+  auto lineBuffer = ModuleStore::store<LineBuffer, 20>();
 }
 
 LineBuffer::LineBuffer() = default;
 
 LineBuffer::LineBuffer(std::string line)
 : _line{std::move(line)}
+, _idx{utf8::size(_line)}
 {
 }
 
@@ -107,3 +109,23 @@ bool LineBuffer::keyPress(unsigned int keystroke, Shell& shell){
   shell.displayLine(*this);
   return true;
 }
+
+// Clean up
+void LineBuffer::commandExecuted(const ParseResult & parseResult, const Line & /*line*/)
+{
+  switch (parseResult.status()) {
+    case Status::Incomplete:
+      _line += '\n';
+      break;
+    default:
+      clear();
+      break;
+  }
+}
+
+void LineBuffer::lineUpdated(const ParseResult& parseResult, const LineBuffer& line, Shell& shell)
+{
+  _line = line._line;
+  _idx = line._idx;
+}
+
