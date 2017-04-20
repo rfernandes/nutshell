@@ -32,6 +32,43 @@ void LineBuffer::backwardKillWord(){
   }
 }
 
+void LineBuffer::backwardChar(){
+  if (_idx > 0){
+    while (!utf8::is_utf8(_line[--_idx])){}
+  }
+}
+
+void LineBuffer::forwardChar(){
+  if (_line.size() > _idx){
+    _idx += utf8::bytes(_line[_idx]);;
+  }
+}
+
+void LineBuffer::backwardDeleteChar(){
+  if (!_idx){
+    return;
+  }
+  while (!utf8::is_utf8(_line[--_idx])){};
+  deleteChar();
+}
+
+void LineBuffer::deleteChar(){
+  _line.erase(_idx, utf8::bytes(_line[_idx]));
+}
+
+void LineBuffer::begginingOfLine(){
+  _idx = 0;
+}
+
+void LineBuffer::endOfLine(){
+  _idx = _line.size();
+}
+
+void LineBuffer::acceptLine(Shell& shell){
+  shell.executeCommand(*this);
+  clear();
+}
+
 const std::string& LineBuffer::line() const{
   return _line;
 }
@@ -70,32 +107,25 @@ bool LineBuffer::keyPress(unsigned int keystroke, Shell& shell){
       break;
     case Input::Backspace:
     case '\b': // Ctrl-H
-      if (!_idx){
-        break;
-      }
-      while (!utf8::is_utf8(_line[--_idx])){};
+      backwardDeleteChar();
+      break;
     case Input::Delete:
-      _line.erase(_idx, utf8::bytes(_line[_idx]));
+      deleteChar();
       break;
     case Input::Left:
-      if (_idx > 0){
-        while (!utf8::is_utf8(_line[--_idx])){}
-      }
+      backwardChar();
       break;
     case Input::Right:
-      if (_line.size() > _idx){
-        _idx += utf8::bytes(_line[_idx]);;
-      }
+      forwardChar();
       break;
     case Input::Home:
-      _idx = 0;
+      begginingOfLine();
       break;
     case Input::End:
-      _idx = _line.size();
+      endOfLine();
       break;
     case '\n':
-      shell.executeCommand(*this);
-      clear();
+      acceptLine(shell);
       break;
     case 4: //Ctrl-D
       shell.exit();

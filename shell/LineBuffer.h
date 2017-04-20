@@ -13,7 +13,17 @@ public:
   LineBuffer();
   explicit LineBuffer(std::string line);
 
+  void backwardDeleteChar();
   void backwardKillWord();
+  void deleteChar();
+
+  void backwardChar();
+  void forwardChar();
+
+  void begginingOfLine();
+  void endOfLine();
+
+  void acceptLine(Shell &shell);
 
   void clear();
 
