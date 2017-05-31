@@ -137,35 +137,38 @@ Assistive::Assistive()
 void Assistive::lineUpdated(const ParseResult& parseResult, const LineBuffer& line, Shell& shell){
   auto& out = shell.out();
 
-  switch (parseResult.status()){
-    case Status::NoMatch:
-      out << Color::Red << line.line() << Color::Reset;
-      break;
-    default:{
-      auto it = line.line().begin();
+  if (!_active){
+    out << line.line() << Color::Reset;
 
-      for (const auto& segment: parseResult.segments()){
-        while (it != segment.view.begin()){
+  }else{
+    switch (parseResult.status()){
+      case Status::NoMatch:
+        out << Color::Red << line.line() << Color::Reset;
+        break;
+      default:{
+        auto it = line.line().begin();
+
+        for (const auto& segment: parseResult.segments()){
+          while (it != segment.view.begin()){
+            out << *it;
+            ++it;
+          }
+          out << segment.type;
+          while (it != segment.view.end()){
+            out << *it;
+            ++it;
+          }
+        }
+        out << Mode::Normal << Color::Reset;
+        while (it != line.line().end()){
           out << *it;
           ++it;
         }
-        out << segment.type;
-        while (it != segment.view.end()){
-          out << *it;
-          ++it;
-        }
+        break;
       }
-      out << Mode::Normal << Color::Reset;
-      while (it != line.line().end()){
-        out << *it;
-        ++it;
-      }
-      break;
     }
-  }
 
    // Assistive (parseResult)
-  if (_active){
     stringstream block;
     auto description = help.describe(parseResult);
     assist(block, parseResult.segments(), description);
