@@ -2,11 +2,9 @@
 
 #include <algorithm>
 #include <type_traits>
-
-#include <experimental/string_view>
+#include <string_view>
 
 using namespace std;
-using namespace std::experimental;
 
 CommandStore& CommandStore::instance() {
   static CommandStore instance;

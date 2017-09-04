@@ -12,7 +12,6 @@
 #include <fstream>
 
 using namespace std;
-using namespace std::experimental;
 using namespace manip;
 
 Shell::Shell()
@@ -76,6 +75,7 @@ void Shell::executeCommand(const LineBuffer& line){
   switch (executionResult.status()) {
     case Status::NoMatch:
       _out << "Command not found [" << line.firstWord() << "]\n";
+      [[fallthrough]];
     case Status::Ok:
       prompt();
       break;

@@ -7,8 +7,6 @@
 #include <boost/spirit/home/x3.hpp>
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
 
-#include <experimental/string_view>
-
 namespace parser
 {
   template<Segment::Type Type>

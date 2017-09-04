@@ -2,9 +2,9 @@
 #define LINE_H
 
 #include <string>
-#include <experimental/string_view>
+#include <string_view>
 
 using Line = std::string;
-using Suggestion = std::experimental::string_view;
+using Suggestion = std::string_view;
 
 #endif

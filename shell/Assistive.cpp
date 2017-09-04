@@ -7,11 +7,10 @@
 #include <shell/History.h>
 
 #include <experimental/filesystem>
-#include <experimental/string_view>
 #include <unordered_map>
+#include <string_view>
 
 using namespace std;
-using namespace std::experimental;
 using namespace std::experimental::filesystem;
 using namespace manip;
 
@@ -43,13 +42,13 @@ namespace {
       if (!segments.empty()){
         const auto &command = segments.front().view;
 
-        const auto commandIt = _db.find(command.to_string());
+        const auto commandIt = _db.find(string{command});
         if (commandIt != _db.end()){
           ret.emplace_back(commandIt->second.first);
           for (const auto& segment: segments){
             // FIXME: Add string_view method to Segment
             if (&segment != &segments.front()){
-              auto parameterIt = commandIt->second.second.find(segment.view.to_string());
+              auto parameterIt = commandIt->second.second.find(string{segment.view});
               if (parameterIt != commandIt->second.second.end()){
                 ret.emplace_back(parameterIt->second);
               }else{

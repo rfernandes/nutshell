@@ -5,9 +5,8 @@
 #include <shell/Line.h>
 #include <io/Output.h>
 
-#include <experimental/string_view>
-#include <unordered_set>
 #include <memory>
+#include <unordered_set>
 #include <vector>
 
 class Command;
@@ -21,7 +20,7 @@ enum class Status {
 struct Segment{
   enum class Type{Unknown, Command, Builtin, Function, Parameter, Argument, String};
   Type type;
-  std::experimental::string_view view;
+  std::string_view view;
   std::string info;
 
   Segment(Type type,

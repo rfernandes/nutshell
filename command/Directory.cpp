@@ -95,7 +95,7 @@ Cd::Cd()
 
 Cd::~Cd() = default;
 
-void Cd::execute(typename CdTrait::Data& data, Output& output){
+void Cd::execute(typename CdTrait::Data& data, Output& /*output*/){
   path target {data.parameters ? boost::apply_visitor(CdVisitor{*this}, data.parameters.get())
                               : _home};
 

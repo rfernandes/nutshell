@@ -79,7 +79,7 @@ namespace {
     command
   )
 
-  Line empty;
+  Line emptyLine;
 }
 
 class Visitor {
@@ -136,14 +136,14 @@ void History::add(const Entry& entry) {
 
 const Line& History::forward() {
   return _idx < _history.end()
-    ? _idx + 1 == _history.end() ? empty: (++_idx)->line
-    : _history.empty() ? empty: _history.back().line;
+    ? _idx + 1 == _history.end() ? emptyLine: (++_idx)->line
+    : _history.empty() ? emptyLine: _history.back().line;
 }
 
 const Line& History::backward() {
   return _idx > _history.begin()
     ? (--_idx)->line
-    : _history.empty() ? empty: _history.front().line;
+    : _history.empty() ? emptyLine: _history.front().line;
 }
 
 void History::clear() {

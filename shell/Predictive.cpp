@@ -41,7 +41,7 @@ bool Predictive::keyPress(unsigned int keystroke, Shell& shell){
   switch (keystroke){
     case Input::CtrlM:
       if (!_suggestion.empty()){
-        shell.executeCommand(LineBuffer{_suggestion.to_string()});
+        shell.executeCommand(LineBuffer{string{_suggestion}});
         _suggestion = Suggestion{};
       }
       return true;

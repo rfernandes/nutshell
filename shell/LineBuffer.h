@@ -34,7 +34,7 @@ public:
   void line(const std::string& line);
   const std::string& line() const;
 
-  std::experimental::string_view firstWord() const;
+  std::string_view firstWord() const;
 
   bool keyPress(unsigned int keystroke, Shell & shell) override;
   void commandExecuted(const ParseResult & parseResult, const Line & line) override;

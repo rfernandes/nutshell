@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.1)
 project(nutshell)
 
 add_definitions(
--std=c++14
+-std=c++17
 -pedantic
 -Wall
 -Wextra

@@ -153,7 +153,7 @@ void LineBuffer::commandExecuted(const ParseResult & parseResult, const Line & /
   }
 }
 
-void LineBuffer::lineUpdated(const ParseResult& parseResult, const LineBuffer& line, Shell& shell)
+void LineBuffer::lineUpdated(const ParseResult& /*parseResult*/, const LineBuffer& line, Shell& /*shell*/)
 {
   _line = line._line;
   _idx = line._idx;

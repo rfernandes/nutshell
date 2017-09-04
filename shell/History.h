@@ -6,7 +6,7 @@
 #include <shell/Line.h>
 
 #include <chrono>
-#include <experimental/string_view>
+#include <string_view>
 
 class History: public Module {
 public:
@@ -35,7 +35,7 @@ public:
   void clear();
   const std::vector<Entry>& list() const;
 
-  std::experimental::string_view suggest(const Line& line) const;
+  std::string_view suggest(const Line& line) const;
 
   void commandExecute(const Line &line) override;
   void commandExecuted(const ParseResult &parseResult, const Line &line) override;
