@@ -58,7 +58,7 @@ const StringTrait::Rule & StringTrait::rule(){
   return parser::string;
 }
 
-void String::execute(typename StringTrait::Data& data, Output& output){
+void String::execute(const typename StringTrait::Data& data, Output& output){
   for (const auto &a: data){
     output << a;
   }

@@ -16,10 +16,12 @@ BuiltIn::BuiltIn(string command, string help, Function function)
 
 BuiltIn::~BuiltIn() = default;
 
-ParseResult BuiltIn::parse(const Line& line, Output& output, bool execute) {
+ParseResult BuiltIn::parse(const Line& line, Output& output) {
+  // TODO: Rework this as ParseDesc instance
+
   auto matched = matches(line);
-  if (matched && execute){
-    _function(line, output);
+  if (matched/* && execute*/){
+//     _function(line, output);
   }
 
   ParseResult desc;
@@ -29,5 +31,9 @@ ParseResult BuiltIn::parse(const Line& line, Output& output, bool execute) {
   }
 
   return desc;
+}
+
+void BuiltIn::execute(const ParseResult& parseResult, Output& output) {
+
 }
 

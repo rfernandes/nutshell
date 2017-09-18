@@ -62,9 +62,11 @@ void Shell::exit(){
 }
 
 ParseResult Shell::handleExecuteCommand(const LineBuffer& line){
-  const ParseResult executionResult {
-    _commands.parse(line.line(), _out, true)};
-  return executionResult;
+  const auto result = _commands.parse(line.line(), _out);
+  if (result.command){
+      result.command->execute(result.parseResult, _out);
+  }
+  return result.parseResult;
 }
 
 void Shell::executeCommand(const LineBuffer& line){
@@ -80,7 +82,8 @@ void Shell::executeCommand(const LineBuffer& line){
       prompt();
       break;
     case Status::Incomplete:
-      _function.parse(":prompt_feed", _out, true);
+      auto promptParseResult = _function.parse(":prompt_feed", _out);
+      _function.execute(promptParseResult, _out);
       _column = _cursor.position().x;
       break;
   }
@@ -88,14 +91,15 @@ void Shell::executeCommand(const LineBuffer& line){
 
 void Shell::displayLine(const LineBuffer& line){
   _cursor.column(_column);
-  auto matched = _commands.parse(line.line(), _out, false);
-  _modules.lineUpdated(matched, line, *this);
+  auto matched = _commands.parse(line.line(), _out);
+  _modules.lineUpdated(matched.parseResult, line, *this);
   _cursor.column(line.pos() + _column);
 }
 
 void Shell::prompt() {
   //TODO: call Function "directly", instead of going through store
-  _function.parse(":prompt", _out, true);
+  const auto parseResult = _function.parse(":prompt", _out);
+  _function.execute(parseResult, _out);
   _column = _cursor.position().x;
 }
 

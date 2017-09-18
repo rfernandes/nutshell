@@ -72,7 +72,7 @@ Function::Function()
   }
 {}
 
-ParseResult Function::parse(const Line& line, Output& output, bool execute){
+ParseResult Function::parse(const Line& line, Output& output){
   auto iter = line.begin();
   const auto& endIter = line.end();
 
@@ -88,25 +88,31 @@ ParseResult Function::parse(const Line& line, Output& output, bool execute){
   bool ok {x3::phrase_parse(iter, endIter, parser[matcher], x3::space, data)};
 
   if (ok) {
+    desc.data(data);
     desc.status(Status::Ok);
-    if (execute){
-      if (data.content){
-        if (data.content.get().finished){
-          _functions[data.name] = data.content.get().content;
-        }else{
-          desc.status(Status::Incomplete);
-        }
-      }else{
-        // TODO: assign through semantic action so we don't have to loopup twice
-        const auto& function = _functions.at(data.name);
-        stringstream functionBody{function};
-        string line;
-        while (getline(functionBody, line)) {
-          CommandStore::instance().parse(line, output, true);
-        }
-      }
-    }
   }
   return desc;
 }
 
+void Function::execute(const ParseResult& parseResult, Output& output) {
+  const auto& data = std::any_cast<ast::Command>(parseResult.data());
+  if (data.content){
+    if (data.content.get().finished){
+      _functions[data.name] = data.content.get().content;
+    }else{
+//       parseResult.status(Status::Incomplete);
+    }
+  }else{
+    // TODO: assign through semantic action so we don't have to loopup twice
+    const auto& function = _functions.at(data.name);
+    stringstream functionBody{function};
+    string line;
+    while (getline(functionBody, line)) {
+      // TODO needed ? or does the execute call suffice ?
+      auto storeParse = CommandStore::instance().parse(line, output);
+      if (storeParse.command){
+        storeParse.command->execute(storeParse.parseResult, output);
+      }
+    }
+  }
+}

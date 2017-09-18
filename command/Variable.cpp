@@ -137,7 +137,7 @@ const VariableTrait::Rule& VariableTrait::rule(){
   return parser::variable;
 }
 
-void Variable::execute(typename VariableTrait::Data& data, Output& output){
+void Variable::execute(const typename VariableTrait::Data& data, Output& output){
   VariableVisitor visitor{*this, output};
   boost::apply_visitor(visitor, data);
 }

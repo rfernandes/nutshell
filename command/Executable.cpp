@@ -75,66 +75,6 @@ namespace {
     command
   )
 
-  // Pipe to capture output
-  void launch(const ast::Command &command, Output& output) {
-    int toChild[2];
-    int fromChild[2];
-
-    // FIXME: check for non null return
-    pipe(toChild);
-    pipe(fromChild);
-
-    switch (auto pid=fork()){
-      case -1:
-        throw std::runtime_error("Unable to fork");
-        break;
-      case 0: { // Child
-        dup2(toChild[READ], STDIN_FILENO);
-        dup2(fromChild[WRITE], STDOUT_FILENO);
-        dup2(fromChild[WRITE], STDERR_FILENO);
-        close(toChild[WRITE]);
-        close(fromChild[READ]);
-        std::vector<const char*> args;
-        args.emplace_back(command.command.c_str());
-        std::transform(command.parameters.begin(),
-                       command.parameters.end(),
-                       std::back_inserter(args), [](auto &str){
-                         return str.data();
-                       });
-        args.emplace_back(nullptr);
-        execvp(command.command.data(), const_cast<char*const*>(&args[0]));
-        std::terminate();
-        break;
-      }
-      default: // Parent
-        const auto bufferSize = 100;
-        char buffer[bufferSize+1];
-        close(toChild[READ]);
-        close(fromChild[WRITE]);
-        int status;
-        bool finished = false;
-        while (!finished) {
-          switch (auto readResult = read(fromChild[READ], buffer, bufferSize)){
-            case 0: /* End-of-File, or non-blocking read. */
-              waitpid(pid, &status, 0);
-              finished = true;
-              break;
-            case -1:
-              if (errno == EINTR ||
-                  errno == EAGAIN){
-                errno = 0;
-                break;
-              }else{
-                throw std::runtime_error("Reading from child faild");
-              }
-            default:
-              output.write(buffer, readResult);
-              break;
-          }
-        }
-        break;
-    };
-  }
 }
 
 Executable::Executable(std::set<std::string> paths)
@@ -142,7 +82,7 @@ Executable::Executable(std::set<std::string> paths)
 {
 }
 
-ParseResult Executable::parse(const Line& line, Output& output, bool execute){
+ParseResult Executable::parse(const Line& line, Output& output){
   auto iter = line.begin();
   const auto& endIter = line.end();
 
@@ -158,11 +98,70 @@ ParseResult Executable::parse(const Line& line, Output& output, bool execute){
 
   if (ok){
     desc.status(Status::Ok);
-
-    if (execute){
-      launch(data, output);
-    }
   }
 
   return desc;
+}
+
+
+// Pipe to capture output
+void Executable::execute(const ParseResult& parseResult, Output& output) {
+  const auto& command = std::any_cast<ast::Command>(parseResult.data());
+  int toChild[2];
+  int fromChild[2];
+
+  // FIXME: check for non null return
+  pipe(toChild);
+  pipe(fromChild);
+
+  switch (auto pid=fork()){
+    case -1:
+      throw std::runtime_error("Unable to fork");
+      break;
+    case 0: { // Child
+      dup2(toChild[READ], STDIN_FILENO);
+      dup2(fromChild[WRITE], STDOUT_FILENO);
+      dup2(fromChild[WRITE], STDERR_FILENO);
+      close(toChild[WRITE]);
+      close(fromChild[READ]);
+      std::vector<const char*> args;
+      args.emplace_back(command.command.c_str());
+      std::transform(command.parameters.begin(),
+                      command.parameters.end(),
+                      std::back_inserter(args), [](auto &str){
+                        return str.data();
+                      });
+      args.emplace_back(nullptr);
+      execvp(command.command.data(), const_cast<char*const*>(&args[0]));
+      std::terminate();
+      break;
+    }
+    default: // Parent
+      const auto bufferSize = 100;
+      char buffer[bufferSize+1];
+      close(toChild[READ]);
+      close(fromChild[WRITE]);
+      int status;
+      bool finished = false;
+      while (!finished) {
+        switch (auto readResult = read(fromChild[READ], buffer, bufferSize)){
+          case 0: /* End-of-File, or non-blocking read. */
+            waitpid(pid, &status, 0);
+            finished = true;
+            break;
+          case -1:
+            if (errno == EINTR ||
+                errno == EAGAIN){
+              errno = 0;
+              break;
+            }else{
+              throw std::runtime_error("Reading from child faild");
+            }
+          default:
+            output.write(buffer, readResult);
+            break;
+        }
+      }
+      break;
+  };
 }

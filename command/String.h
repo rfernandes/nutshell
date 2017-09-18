@@ -13,7 +13,8 @@ struct StringTrait{
 
 class String: public parser::RuleCommand<StringTrait>{
 public:
-  void execute(typename StringTrait::Data& data, Output& output) override;
+  void execute(const typename StringTrait::Data& data, Output& output) override;
+
 };
 
 #endif

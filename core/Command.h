@@ -5,6 +5,7 @@
 #include <shell/Line.h>
 #include <io/Output.h>
 
+#include <any>
 #include <memory>
 #include <unordered_set>
 #include <vector>
@@ -46,6 +47,9 @@ public:
   const Segments& segments() const;
   Segments& segments();
 
+  void data(const std::any& data){ _data = data; }
+  const std::any& data() const noexcept { return _data; }
+
 private:
   Status _status;
   Segments _segments;
@@ -57,11 +61,17 @@ public:
 
   virtual ~Command() = default;
 
-  virtual ParseResult parse(const Line& line, Output& output, bool execute) = 0;
+  virtual ParseResult parse(const Line& line, Output& output) = 0;
+  virtual void execute(const ParseResult& parseResult, Output& output) = 0;
 };
 
-class CommandStore : public Command{
+class CommandStore{
 public:
+
+  struct StoreParseResult{
+    ParseResult parseResult;
+    Command* command;
+  };
 
   template<typename CommandT, typename ...Args>
   static CommandT& store(Args&& ...args) {
@@ -73,7 +83,8 @@ private:
   static CommandStore& instance();
   std::unordered_set<std::unique_ptr<Command>> _commands;
 
-  ParseResult parse(const Line& line, Output& output, bool execute);
+  StoreParseResult parse(const Line& line, Output& output);
+  void execute(const ParseResult &parseResult, Output& output);
 
   friend class Shell;
   friend class Function;
