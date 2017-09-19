@@ -97,6 +97,7 @@ ParseResult Executable::parse(const Line& line, Output& output){
   };
 
   if (ok){
+    desc.data(data);
     desc.status(Status::Ok);
   }
 

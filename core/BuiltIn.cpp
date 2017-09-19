@@ -18,14 +18,11 @@ BuiltIn::~BuiltIn() = default;
 
 ParseResult BuiltIn::parse(const Line& line, Output& output) {
   // TODO: Rework this as ParseDesc instance
-
   auto matched = matches(line);
-  if (matched/* && execute*/){
-//     _function(line, output);
-  }
 
   ParseResult desc;
   if (matched){
+    desc.data(line);
     desc.status(Status::Ok);
     desc.segments().emplace_back(Segment::Type::Builtin, line.begin(), line.end(), _help);
   }
@@ -34,6 +31,7 @@ ParseResult BuiltIn::parse(const Line& line, Output& output) {
 }
 
 void BuiltIn::execute(const ParseResult& parseResult, Output& output) {
-
+  const auto& data = any_cast<const Line>(parseResult.data());
+  _function(data, output);
 }
 

@@ -65,6 +65,9 @@ ParseResult Shell::handleExecuteCommand(const LineBuffer& line){
   const auto result = _commands.parse(line.line(), _out);
   if (result.command){
       result.command->execute(result.parseResult, _out);
+  }else
+  {
+    // TODO: Handle error
   }
   return result.parseResult;
 }

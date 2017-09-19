@@ -86,9 +86,9 @@ ParseResult Function::parse(const Line& line, Output& output){
 
   ast::Command data;
   bool ok {x3::phrase_parse(iter, endIter, parser[matcher], x3::space, data)};
+  desc.data(data);
 
   if (ok) {
-    desc.data(data);
     desc.status(Status::Ok);
   }
   return desc;

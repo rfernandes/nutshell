@@ -51,6 +51,8 @@ public:
   const std::any& data() const noexcept { return _data; }
 
 private:
+
+  std::any _data;
   Status _status;
   Segments _segments;
 
@@ -84,7 +86,6 @@ private:
   std::unordered_set<std::unique_ptr<Command>> _commands;
 
   StoreParseResult parse(const Line& line, Output& output);
-  void execute(const ParseResult &parseResult, Output& output);
 
   friend class Shell;
   friend class Function;

@@ -38,14 +38,6 @@ CommandStore::StoreParseResult CommandStore::parse(const Line& line, Output& out
   return {ParseResult{}, nullptr};
 }
 
-// TODO: This problem requires an alternative approach.
-//   We will need to set the matched function (possibly on the CommandStore parse loop)
-//   So that execute calls can be made on the returned ParseResult
-void CommandStore::execute(const ParseResult& parseResult, Output& output){
-//   parseResult.command().execute(parseResult, output);
-}
-
-
 ParseResult::ParseResult()
 : _status{Status::NoMatch}
 {}

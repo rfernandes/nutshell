@@ -43,9 +43,6 @@ namespace parser
 
       if (ok){
         desc.status(Status::Ok);
-//         if (exec){
-//           execute(data, output);
-//         }
       }
 
       return desc;
