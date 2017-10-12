@@ -10,7 +10,8 @@ public:
   using Functions = std::unordered_map<std::string, std::string>;
   explicit Function();
 
-  ParseResult parse(const Line& line, Output& output, bool execute) override;
+  ParseResult parse(const Line& line, Output& output) override;
+  void execute(const ParseResult& parseResult, Output& output) override;
 
 private:
   Functions _functions;

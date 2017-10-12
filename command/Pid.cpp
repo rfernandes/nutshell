@@ -93,11 +93,11 @@ namespace {
   )
 
   struct PidVisitor {
-    unsigned operator()(unsigned& i) const {
+    unsigned operator()(const unsigned& i) const {
       return i;
     }
 
-    unsigned operator()(std::string& str) const {
+    unsigned operator()(const std::string& str) const {
       for(auto& entry: directory_iterator{"/proc"}) {
         if (is_directory(entry) && !is_symlink(entry)) {
           ifstream fin{(entry.path() / "cmdline").string()};
@@ -148,33 +148,36 @@ namespace {
   };
 }
 
-ParseResult Pid::parse(const Line& line, Output& output, bool execute) {
+ParseResult Pid::parse(const Line& line, Output& output) {
   auto iter = line.begin();
   auto endIter = line.end();
 
   ParseResult desc;
   const auto parser = x3::with<ParseResult>(ref(desc))[command];
 
-
   ast::PidCommand data;
   const bool ok {x3::phrase_parse(iter, endIter, parser, x3::space, data)};
+  desc.data(data);
 
   if (!ok) return desc;
 
-  const unsigned pid = data.pid ? boost::apply_visitor(PidVisitor{}, data.pid.get())
-                                : getpid();
-
   desc.status(Status::Ok);
 
-  if (execute) {
-    if (data.function) {
-      boost::apply_visitor(FunctionVisitor{pid, output}, data.function.get());
-    } else {
-      output << pid << "\n";
-    }
-  }
   return desc;
 }
+
+void Pid::execute(const ParseResult& parseResult, Output& output) {
+  const auto& data = std::any_cast<ast::PidCommand>(parseResult.data());
+  const unsigned pid = data.pid ? boost::apply_visitor(PidVisitor{}, data.pid.get())
+                              : getpid();
+
+  if (data.function) {
+    boost::apply_visitor(FunctionVisitor{pid, output}, data.function.get());
+  } else {
+    output << pid << "\n";
+  }
+}
+
 
 namespace {
   auto& pid = CommandStore::store<Pid>();

@@ -25,7 +25,8 @@ namespace {
     : _history{history}
     {}
 
-    ParseResult parse(const Line & line, Output & output, bool execute) override;
+    ParseResult parse(const Line& line, Output& output) override;
+    void execute(const ParseResult&, Output& output) override;
   };
 
   auto &historyCommand = CommandStore::store<HistoryCommand>(history);
@@ -115,7 +116,7 @@ class Visitor {
       _out << "Unimplemented - Execute prev command\n";
     }
 
-    void operator()(uint64_t &idx) const {
+    void operator()(const uint64_t &idx) const {
       _out << "Unimplemented - Execute command idx" << idx << "\n";
     }
 };
@@ -167,7 +168,7 @@ string_view History::suggest(const Line& line) const {
   return ret;
 }
 
-ParseResult HistoryCommand::parse(const Line& line, Output& output, bool execute){
+ParseResult HistoryCommand::parse(const Line& line, Output& output){
   auto iter = line.begin();
   auto endIter = line.end();
 
@@ -179,12 +180,14 @@ ParseResult HistoryCommand::parse(const Line& line, Output& output, bool execute
 
   if (ok){
     desc.status(Status::Ok);
-    if (execute){
-      boost::apply_visitor(Visitor{_history, output}, data);
-    }
   }
 
   return desc;
+}
+
+void HistoryCommand::execute(const ParseResult& parseResult, Output& output){
+  const auto& data = std::any_cast<ast::Command>(parseResult.data());
+  boost::apply_visitor(Visitor{_history, output}, data);
 }
 
 void History::commandExecute(const Line& /*line*/){

@@ -26,7 +26,7 @@ public:
   Cd();
   ~Cd() override;
 
-  void execute(typename CdTrait::Data & data, Output & output) override;
+  void execute(const typename CdTrait::Data & data, Output & output) override;
 
 //   ParseResult parse(const Line& line, Output& output, bool execute) override;
 

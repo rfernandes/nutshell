@@ -17,7 +17,7 @@ struct VariableTrait{
 
 class Variable: public parser::RuleCommand<VariableTrait>{
 
-  void execute(typename VariableTrait::Data& data, Output& output) override;
+  void execute(const typename VariableTrait::Data& data, Output& output) override;
 public:
   using Store = std::unordered_map<std::string, std::string>;
 

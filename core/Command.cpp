@@ -28,15 +28,14 @@ Segment::Segment(Segment::Type type,
 {
 }
 
-ParseResult CommandStore::parse(const Line& line, Output& output, bool execute) {
-  ParseResult descDefault;
+CommandStore::StoreParseResult CommandStore::parse(const Line& line, Output& output) {
   for (const auto& command: _commands) {
-    ParseResult descResult {command->parse(line, output, execute)};
+    ParseResult descResult {command->parse(line, output)};
     if (descResult.status() != Status::NoMatch){
-      return descResult;
+      return {descResult, command.get()};
     }
   }
-  return descDefault;
+  return {ParseResult{}, nullptr};
 }
 
 ParseResult::ParseResult()
