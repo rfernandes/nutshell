@@ -1,5 +1,6 @@
 #include "Command.h"
 
+
 #include <algorithm>
 #include <type_traits>
 #include <string_view>
@@ -11,19 +12,12 @@ CommandStore& CommandStore::instance() {
   return instance;
 }
 
-namespace {
-  string_view make_view(string::const_iterator begin,
-                        string::const_iterator end){
-    return {&*begin, static_cast<size_t>(distance(begin, end))};
-  }
-}
-
 Segment::Segment(Segment::Type type,
                  std::string::const_iterator begin,
                  std::string::const_iterator end,
                  std::string info)
 : type{type}
-, view{make_view(begin, end)}
+, view{helpers::make_view(begin, end)}
 , info{info}
 {
 }

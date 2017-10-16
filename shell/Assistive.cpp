@@ -15,11 +15,25 @@ using namespace std::experimental::filesystem;
 using namespace manip;
 
 namespace {
+
   auto &assistive = ModuleStore::store<Assistive>();
 
   class HelpDatabase{
-    unordered_map <string, std::pair<string, unordered_map<string, string>>> _db;
   public:
+
+    struct CommandDescription
+    {
+      string description;
+      unordered_map<string, string> parameters;
+    };
+
+    struct ParameterDescription
+    {
+      string parameter;
+      string description;
+    };
+
+    unordered_map <string, CommandDescription> _db;
 
     HelpDatabase()
     :_db{
@@ -31,9 +45,33 @@ namespace {
           {"--almost-all", "do not list implied . and .."},
           {"-l", "use a long listing format"},
           {"-r", "reverse order while sorting"},
+      }}},
+      {"git", {"Distributed source control", {
+          {"add", "Add file contents to the index"},
+          {"mv", "Move or rename a file, a directory, or a symlink"},
+          {"reset", "Reset current HEAD to the specified state"},
+          {"checkout", "Switch branches or restore working tree files"},
       }}}
     }
     {}
+
+    string segmentDescription(Segment segment){
+      string description;
+      switch (segment.type){
+        case Segment::Type::Builtin:
+          description = segment.info;
+          break;
+        case Segment::Type::FileName:
+          if (exists(segment.view)) {
+            description = "known file";
+            break;
+          }
+          [[fallthrough]];
+        default:
+          description = string{"unknown "} + enum_cast<const char *>(segment.type);
+      }
+      return description;
+    }
 
     vector<string> describe(const ParseResult& parseResult){
       vector<string> ret;
@@ -44,21 +82,23 @@ namespace {
 
         const auto commandIt = _db.find(string{command});
         if (commandIt != _db.end()){
-          ret.emplace_back(commandIt->second.first);
+          // Store command description
+          ret.emplace_back(commandIt->second.description);
+          // Store segment description
           for (const auto& segment: segments){
             // FIXME: Add string_view method to Segment
             if (&segment != &segments.front()){
-              auto parameterIt = commandIt->second.second.find(string{segment.view});
-              if (parameterIt != commandIt->second.second.end()){
+              auto parameterIt = commandIt->second.parameters.find(string{segment.view});
+              if (parameterIt != commandIt->second.parameters.end()){
                 ret.emplace_back(parameterIt->second);
               }else{
-                ret.emplace_back(string("unknown ") + enum_cast<const char *>(segment.type));
+                ret.push_back(std::move(segmentDescription(segment)));
               }
             }
           }
         }else{
           for (const auto& segment: segments){
-            ret.emplace_back(string("unknown ") + enum_cast<const char *>(segment.type));
+            ret.push_back(std::move(segmentDescription(segment)));
           }
         }
       }
@@ -81,6 +121,9 @@ namespace {
       case Segment::Type::Argument:
         out << Color::Magenta;
         break;
+      case Segment::Type::FileName:
+        out << Mode::Bold << Color::Magenta;
+        break;
       case Segment::Type::String:
         out << Mode::Bold << Color::Blue;
         break;
@@ -90,6 +133,11 @@ namespace {
       default:
         out << Color::White;
     }
+    return out;
+  }
+
+  ostream& operator << (ostream& out, const Segment& segment){
+    out << segment.type << segment.view;
     return out;
   }
 
@@ -145,24 +193,15 @@ void Assistive::lineUpdated(const ParseResult& parseResult, const LineBuffer& li
         out << Color::Red << line.line() << Color::Reset;
         break;
       default:{
-        auto it = line.line().begin();
+        auto lineView = string_view{line.line()};
+        auto it = lineView.begin();
 
         for (const auto& segment: parseResult.segments()){
-          while (it != segment.view.begin()){
-            out << *it;
-            ++it;
-          }
-          out << segment.type;
-          while (it != segment.view.end()){
-            out << *it;
-            ++it;
-          }
+          out << helpers::make_view(it, segment.view.begin())
+              << segment;
+          it = segment.view.end();
         }
-        out << Mode::Normal << Color::Reset;
-        while (it != line.line().end()){
-          out << *it;
-          ++it;
-        }
+        out << Mode::Normal << Color::Reset << helpers::make_view(it, lineView.end());
         break;
       }
     }

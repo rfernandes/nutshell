@@ -19,7 +19,7 @@ enum class Status {
 };
 
 struct Segment{
-  enum class Type{Unknown, Command, Builtin, Function, Parameter, Argument, String};
+  enum class Type{Unknown, Command, Builtin, Function, Parameter, Argument, FileName, String};
   Type type;
   std::string_view view;
   std::string info;
@@ -32,7 +32,7 @@ struct Segment{
 
 template<>
 constexpr const char* enum_data<Segment::Type>[] {
-  "Unknown", "Command", "Builtin", "Function", "Parameter", "Argument", "String"
+  "Unknown", "Command", "Builtin", "Function", "Parameter", "Argument", "FileName", "String"
 };
 
 class ParseResult{

@@ -6,6 +6,13 @@
 #include <string>
 #include <type_traits>
 
+namespace helpers{
+  std::string_view make_view(std::string::const_iterator begin,
+                             std::string::const_iterator end);
+  std::string_view make_view(std::string_view::const_iterator begin,
+                             std::string_view::const_iterator end);
+}
+
 namespace utf8{
 
   constexpr bool is_utf8(char byte) noexcept{

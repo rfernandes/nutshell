@@ -28,8 +28,6 @@ public:
 
   void execute(const typename CdTrait::Data & data, Output & output) override;
 
-//   ParseResult parse(const Line& line, Output& output, bool execute) override;
-
   Status cd(const Line& parameters, Output& curses);
 
   /// get the current directory

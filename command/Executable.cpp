@@ -23,6 +23,7 @@ namespace {
   namespace ast {
     using Parameters = string;
     using Executable = string;
+    using FileName = string;
 
     struct Command{
       Executable command;
@@ -46,31 +47,36 @@ namespace {
   struct option_class: parser::type_annotation<Segment::Type::Parameter>{};
   struct longOption_class: parser::type_annotation<Segment::Type::Parameter>{};
   struct argument_class: parser::type_annotation<Segment::Type::Argument>{};
+  struct fileName_class: parser::type_annotation<Segment::Type::FileName>{};
   struct executable_class: parser::type_annotation<Segment::Type::Command>{};
   struct command_class;
 
   using option_type = x3::rule<option_class, ast::Parameters>;
   using longOption_type = x3::rule<longOption_class, ast::Parameters>;
   using argument_type = x3::rule<argument_class, ast::Parameters>;
+  using fileName_type = x3::rule<fileName_class, ast::FileName>;
   using executable_type = x3::rule<executable_class, ast::Executable>;
   using command_type = x3::rule<command_class, ast::Command>;
 
   const option_type option = "option";
   const longOption_type longOption = "longOption";
   const argument_type argument = "argument";
+  const fileName_type fileName = "fileName";
   const executable_type executable = "executable";
   const command_type command = "command";
 
   auto option_def = x3::lexeme[x3::char_('-') >> +~x3::char_(' ')];
   auto longOption_def = x3::lexeme[x3::string("--") >> +~x3::char_(' ')];
   auto argument_def = x3::lexeme[+~x3::char_(' ')];
+  auto fileName_def = x3::lexeme[(x3::char_('.') | x3::char_('/')) >> *~x3::char_(' ')];
   auto executable_def = x3::lexeme[+~x3::char_(' ')];
-  auto command_def = executable >> *(longOption | option | argument);
+  auto command_def = executable >> *(longOption | option | fileName | argument);
 
   BOOST_SPIRIT_DEFINE(
     option,
     longOption,
     argument,
+    fileName,
     executable,
     command
   )

@@ -5,6 +5,18 @@
 
 using namespace std;
 
+namespace helpers{
+  string_view make_view(string::const_iterator begin,
+                        string::const_iterator end){
+    return {&*begin, static_cast<size_t>(distance(begin, end))};
+  }
+  string_view make_view(string_view::const_iterator begin,
+                        string_view::const_iterator end){
+    return {&*begin, static_cast<size_t>(distance(begin, end))};
+  }
+};
+
+
 namespace utf8{
 
   //TODO: Move to Utils
