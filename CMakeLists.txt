@@ -6,6 +6,8 @@ add_definitions(
 -pedantic
 -Wall
 -Wextra
+-Werror
+-Wno-unused-parameter
 )
 
 add_library(lnutshell STATIC

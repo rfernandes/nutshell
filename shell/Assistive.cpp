@@ -86,7 +86,6 @@ namespace {
           ret.emplace_back(commandIt->second.description);
           // Store segment description
           for (const auto& segment: segments){
-            // FIXME: Add string_view method to Segment
             if (&segment != &segments.front()){
               auto parameterIt = commandIt->second.parameters.find(string{segment.view});
               if (parameterIt != commandIt->second.parameters.end()){

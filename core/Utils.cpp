@@ -14,8 +14,7 @@ namespace helpers{
                         string_view::const_iterator end){
     return {&*begin, static_cast<size_t>(distance(begin, end))};
   }
-};
-
+}
 
 namespace utf8{
 
