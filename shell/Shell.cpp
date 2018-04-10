@@ -73,8 +73,8 @@ ParseResult Shell::handleExecuteCommand(const LineBuffer& line){
 }
 
 void Shell::executeCommand(const LineBuffer& line){
-  _out << endl;
   _modules.commandExecute(line.line());
+  _out << endl;
   const auto executionResult = handleExecuteCommand(line);
   _modules.commandExecuted(executionResult, line.line());
   switch (executionResult.status()) {
@@ -151,5 +151,20 @@ void Shell::output(istream& in){
     _out << '\n' << Erase::CursorToEnd;
     _cursor.restore();
   }
+}
+
+void Shell::clear(int lines){
+  _cursor.save();
+  _cursor.column(0);
+
+  for (int l{0}; l < lines; ++l){
+    _cursor.forceDown();
+    _out << Color::Reset << Erase::CursorToEnd;
+  }
+
+  if (lines){
+    _cursor.up(lines);
+  }
+  _cursor.restore();
 }
 

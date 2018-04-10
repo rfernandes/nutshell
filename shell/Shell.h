@@ -25,6 +25,7 @@ public:
   void displayLine(const LineBuffer& line);
 
   void output(std::istream& string);
+  void clear(int lines);
 
   void exit();
 

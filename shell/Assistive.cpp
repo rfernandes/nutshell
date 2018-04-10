@@ -210,7 +210,16 @@ void Assistive::lineUpdated(const ParseResult& parseResult, const LineBuffer& li
     auto description = help.describe(parseResult);
     assist(block, parseResult.segments(), description);
     shell.output(block);
+    _shell=&shell;
+    _size = parseResult.segments().size();
   }
+}
+
+void Assistive::commandExecute(const Line& line) {
+  if (!_active){
+    return;
+  }
+  _shell->clear(_size);
 }
 
 bool Assistive::toggle(){
