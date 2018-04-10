@@ -73,7 +73,7 @@ ParseResult Shell::handleExecuteCommand(const LineBuffer& line){
 }
 
 void Shell::executeCommand(const LineBuffer& line){
-  _out << '\n';
+  _out << endl;
   _modules.commandExecute(line.line());
   const auto executionResult = handleExecuteCommand(line);
   _modules.commandExecuted(executionResult, line.line());
