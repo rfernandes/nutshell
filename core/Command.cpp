@@ -18,7 +18,7 @@ Segment::Segment(Segment::Type type,
                  std::string info)
 : type{type}
 , view{helpers::make_view(begin, end)}
-, info{info}
+, info{std::move(info)}
 {
 }
 
