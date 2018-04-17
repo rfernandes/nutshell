@@ -36,7 +36,26 @@ add_executable(nutshell
 main.cpp
 )
 
+add_executable(rules
+shell/Rules.cpp
+io/Cursor.cpp
+io/Input.cpp
+io/Output.cpp
+)
+
 find_package(Boost REQUIRED QUIET)
+
+
+target_link_libraries(rules
+stdc++fs
+${Boost_LIBRARIES}
+)
+
+target_include_directories(rules
+PUBLIC
+${CMAKE_SOURCE_DIR}
+${Boost_INCLUDE_DIRS}
+)
 
 target_include_directories(lnutshell
 PUBLIC
