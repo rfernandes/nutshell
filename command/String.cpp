@@ -25,11 +25,6 @@ namespace parser{
     x3::_val(ctx) = escape;
   };
 
-  const auto escape_code2 = [](auto &ctx) {
-    const string asd = x3::_attr(ctx);
-    cout << " Replace with value when appropriate >" << asd << "<\n";
-  };
-
   struct escape_class {};
   struct var_class{};
 

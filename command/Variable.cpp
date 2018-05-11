@@ -12,24 +12,6 @@ using namespace std;
 
 namespace x3 = boost::spirit::x3;
 
-// The generic parser lost the ability add a semantic action to check if variable exists
-//     auto matcher = [&](auto &ctx){
-//       return match_name(ctx, _variables);
-//     };
-
-namespace {
-  const auto match_name = [](auto &ctx, Variable::Store& variables) {
-    const ast::Variables& data = x3::_attr(ctx);
-    const auto* variable = boost::get<ast::Variable>(&data);
-    if (variable &&
-        !variable->function &&
-        !variables.count(variable->name)){
-      x3::_pass(ctx) = false;
-    }
-  };
-}
-
-
 namespace parser {
 
   struct sync_class: parser::type_annotation<Segment::Type::Function> {};

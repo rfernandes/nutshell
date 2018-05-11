@@ -35,7 +35,7 @@ namespace parser
       const auto &endIter = line.end();
 
       ParseResult desc;
-      const auto parser = x3::with<ParseResult>(boost::ref(desc))[RuleTrait::rule()];
+      const auto parser = x3::with<ParseResult>(std::ref(desc))[RuleTrait::rule()];
 
       typename RuleTrait::Data data;
       const bool ok {x3::phrase_parse(iter, endIter, parser, x3::space, data)};

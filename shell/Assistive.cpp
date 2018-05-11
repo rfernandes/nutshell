@@ -91,13 +91,13 @@ namespace {
               if (parameterIt != commandIt->second.parameters.end()){
                 ret.emplace_back(parameterIt->second);
               }else{
-                ret.push_back(std::move(segmentDescription(segment)));
+                ret.push_back(segmentDescription(segment));
               }
             }
           }
         }else{
           for (const auto& segment: segments){
-            ret.push_back(std::move(segmentDescription(segment)));
+            ret.push_back(segmentDescription(segment));
           }
         }
       }

@@ -21,6 +21,8 @@ public:
 class Dependency
 {
 public:
+  virtual ~Dependency(){}
+
   virtual bool initialize(Module &module) = 0;
 };
 
